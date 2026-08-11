@@ -2,7 +2,7 @@
 <html lang="fr"><head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>CHECK-LIST VOYAGE v119</title>
+<title>CHECK-LIST VOYAGE v125</title>
 <style>
   :root {
     --bg: #0f172a;
@@ -149,6 +149,15 @@
     font-weight: 800; margin: 22px 4px 12px; padding: 7px 16px; border-radius: 999px;
     color: var(--accent); background: rgba(56,189,248,0.15); border: 1px solid rgba(56,189,248,0.45);
   }
+  .sommaire-group-header-row { display: block; }
+  .sommaire-group-header-row .sommaire-group-label { margin: 22px 0 12px; }
+  .sommaire-jump-row { display: flex; justify-content: center; margin: 2px 0 10px; }
+  .sommaire-jump-link {
+    background: transparent; border: 1px solid var(--accent); color: var(--accent);
+    border-radius: 999px; padding: 6px 14px; font-size: 12px; font-weight: 700; cursor: pointer;
+    text-transform: none; display: inline-flex; align-items: center; gap: 6px;
+  }
+  .sommaire-jump-arrow { display: inline-block; font-size: 18px; line-height: 1; font-weight: 800; }
   #activite-tile-grid, .sommaire-group-empty-hint {
     background: rgba(56,189,248,0.05); border: 1px solid rgba(56,189,248,0.25); border-radius: 14px; padding: 12px;
   }
@@ -247,6 +256,10 @@
       max-width: 100%;
       padding-bottom: 6px;
       scroll-behavior: smooth;
+    }
+    body.grid-scroll-locked .grid {
+      overflow-x: hidden;
+      scroll-snap-type: none;
     }
     .card {
       flex: 0 0 100%;
@@ -359,6 +372,25 @@
   }
   .dest-input-wrap .clear-dest-btn:hover { color: var(--text); }
   .dest-buttons { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 8px; }
+  .voyage-block { border-radius: 14px; margin-top: 16px; overflow: hidden; border: 1px solid #334155; }
+  .voyage-block-header {
+    width: 100%; display: flex; align-items: center; justify-content: space-between;
+    padding: 14px 16px; background: transparent; border: none; cursor: pointer; text-align: left;
+  }
+  .voyage-block-title { font-size: 15px; font-weight: 800; }
+  .voyage-block-chevron { font-size: 22px; opacity: 0.9; font-weight: 800; line-height: 1; }
+  .voyage-block-body {
+    max-height: 0; overflow: hidden; transition: max-height 0.3s ease, padding 0.3s ease; padding: 0 16px;
+  }
+  .voyage-block-body.open { max-height: 3000px; padding: 0 16px 16px; }
+  .voyage-block--dest { background: rgba(56,189,248,0.08); border-color: rgba(56,189,248,0.35); }
+  .voyage-block--dest .voyage-block-title { color: var(--accent); }
+  .voyage-block--dates { background: rgba(167,139,250,0.08); border-color: rgba(167,139,250,0.35); }
+  .voyage-block--dates .voyage-block-title { color: #a78bfa; }
+  .voyage-block--docs { background: rgba(251,191,36,0.08); border-color: rgba(251,191,36,0.35); }
+  .voyage-block--docs .voyage-block-title { color: #fbbf24; }
+  .voyage-block--budget { background: rgba(52,211,153,0.08); border-color: rgba(52,211,153,0.35); }
+  .voyage-block--budget .voyage-block-title { color: var(--accent2); }
   .budget-wrap { margin-top: 16px; padding-top: 14px; border-top: 1px dashed #334155; }
   .reminders-wrap { margin-top: 16px; padding-top: 14px; border-top: 1px dashed #334155; }
   .documents-wrap { margin-top: 16px; padding-top: 14px; border-top: 1px dashed #334155; }
@@ -374,13 +406,23 @@
     background: transparent; border: none; color: var(--danger); font-size: 16px; cursor: pointer; padding: 4px 6px;
   }
   .document-status { grid-column: 1 / -1; font-size: 12px; font-weight: 600; margin-bottom: 10px; }
+  .backup-item-row {
+    display: flex; align-items: center; justify-content: space-between; gap: 8px;
+    padding: 8px 10px; border: 1px solid #334155; border-radius: 10px; margin-bottom: 6px; background: var(--card);
+  }
+  .backup-item-label { font-size: 12px; color: var(--text); }
+  .backup-item-restore-btn {
+    background: var(--accent); border: none; color: #0f172a; border-radius: 8px;
+    padding: 6px 12px; font-size: 12px; font-weight: 700; cursor: pointer; white-space: nowrap;
+  }
   .reminders-header { font-size: 14px; font-weight: 700; color: var(--text); margin-bottom: 6px; }
-  .section-header-row { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
+  .section-header-row { display: flex; align-items: center; gap: 6px; margin-bottom: 6px; }
   .section-header-row .reminders-header, .section-header-row .budget-header, .section-header-row .documents-header { margin-bottom: 0; }
   .info-btn {
-    background: transparent; border: none; color: var(--muted);
-    font-size: 15px; font-style: italic; font-weight: 700; font-family: Georgia, 'Times New Roman', serif;
-    line-height: 1; cursor: pointer; flex-shrink: 0; padding: 0 2px;
+    background: #f1f5f9; border: none; color: #0f172a; border-radius: 50%;
+    width: 18px; height: 18px; font-size: 12px; font-style: italic; font-weight: 800;
+    font-family: Georgia, 'Times New Roman', serif; line-height: 18px; text-align: center;
+    cursor: pointer; flex-shrink: 0; padding: 0; display: inline-block;
   }
   .info-text { display: none; font-size: 12px; color: var(--muted); margin: 0 0 12px; line-height: 1.5; }
   .info-text.open { display: block; }
@@ -564,13 +606,13 @@
   .index-tile.hidden-search { display: none; }
   .search-highlight { color: var(--danger); font-weight: 700; }
   @media print { .search-panel, .search-wrap { display: none !important; } }
-  body.hide-checked li.item-row.checked { display: none; }
+  .card.hide-checked-items li.item-row.checked { display: none; }
 </style>
 <script src="https://accounts.google.com/gsi/client" async defer></script>
 </head>
 <body class="">
 
-<h1 style="display:flex;align-items:center;justify-content:center;gap:10px;flex-wrap:wrap;"><img src="data:image/webp;base64,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" alt="Logo valise" style="height:32px;width:32px;object-fit:contain;flex:0 0 auto;"><span id="app-title-text" style="color:#57c8ff;">CHECK-LIST VOYAGE</span><span style="font-size:14px;color:#38d430;">(v119)</span></h1>
+<h1 style="display:flex;align-items:center;justify-content:center;gap:10px;flex-wrap:wrap;"><img src="data:image/webp;base64,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" alt="Logo valise" style="height:32px;width:32px;object-fit:contain;flex:0 0 auto;"><span id="app-title-text" style="color:#57c8ff;">CHECK-LIST VOYAGE</span><span style="font-size:14px;color:#38d430;">(v125)</span></h1>
 <div class="subtitle">Votre checklist personnalisable pour tous vos voyages — cochez, réorganisez, ajoutez ou modifiez vos éléments.</div>
 
 
@@ -3693,7 +3735,7 @@
 
 <script>
 const STORAGE_KEY = 'mobilhome_categories_v2';
-const APP_VERSION = 'v119';
+const APP_VERSION = 'v125';
 
 const DEFAULT_DATA = [
   { icon: "🪥", title: "Trousse de toilette", items: [
@@ -3972,9 +4014,9 @@ const TOUR_STEPS = [
   { tab: 'sommaire', selector: '#sommaire-tile-grid', title: '🎒 Les essentiels',
     text: "Tes modules du quotidien (vêtements, trousse de toilette...). Tape sur un module pour l'ouvrir et cocher les objets." },
   { tab: 'sommaire', selector: '#activite-tile-grid', title: '🎯 Selon activité',
-    text: "Les modules propres à ce voyage (randonnée, ski...). Le bouton sur chaque tuile fait basculer un module d'un groupe à l'autre." },
-  { tab: 'voyage', selector: '.dest-wrap', title: '🧳 Ton voyage',
-    text: "Destination, météo, date de départ, rappels et budget se règlent ici." },
+    text: "Les modules propres à ce voyage (randonnée, ski...). Sur chaque tuile, le petit bouton <strong>🎒 → 🎯</strong> la fait basculer d'un groupe à l'autre." },
+  { tab: 'voyage', selector: '.sommaire-tab-panel[data-tab="voyage"]', title: '🧳 Ton voyage',
+    text: "Destination & météo, dates & rappels, validité des documents et budget : un clic sur chaque bloc le déplie." },
   { tab: 'outils', selector: '.index-action-grid', title: '⚙️ Outils',
     text: "Recherche, mode édition (pour réorganiser/modifier), sauvegardes et export sont regroupés ici." },
   { tab: 'sommaire', selector: null, title: "C'est parti !",
@@ -4611,6 +4653,7 @@ function switchSommaireTab(tab) {
   document.querySelectorAll('.sommaire-tab-panel').forEach(p => {
     p.classList.toggle('active', p.dataset.tab === tab);
   });
+  document.body.classList.toggle('grid-scroll-locked', tab !== 'sommaire');
 }
 
 function renderHistoryList(container) {
@@ -4694,13 +4737,42 @@ function render() {
   voyagePanel.className = 'sommaire-tab-panel' + (currentSommaireTab === 'voyage' ? ' active' : '');
   voyagePanel.dataset.tab = 'voyage';
 
-  const destWrap = document.createElement('div');
-  destWrap.className = 'dest-wrap';
-  destWrap.innerHTML = `
+  function buildVoyageBlock(colorClass, icon, title, defaultOpen) {
+    const block = document.createElement('div');
+    block.className = 'voyage-block ' + colorClass;
+    const header = document.createElement('button');
+    header.type = 'button';
+    header.className = 'voyage-block-header';
+    header.innerHTML = `<span class="voyage-block-title">${icon} ${title}</span><span class="voyage-block-chevron">${defaultOpen ? '▲' : '▼'}</span>`;
+    const body = document.createElement('div');
+    body.className = 'voyage-block-body' + (defaultOpen ? ' open' : '');
+    header.onclick = () => {
+      const isOpen = body.classList.toggle('open');
+      header.querySelector('.voyage-block-chevron').textContent = isOpen ? '▲' : '▼';
+    };
+    block.appendChild(header);
+    block.appendChild(body);
+    voyagePanel.appendChild(block);
+    return body;
+  }
+
+  // --- Bloc 1 : Destination & météo ---
+  const destBody = buildVoyageBlock('voyage-block--dest', '🌍', 'Destination & météo', false);
+  destBody.innerHTML = `
+    <div class="section-header-row">
+      <div class="reminders-header">Ta destination</div>
+      <button type="button" class="info-btn" onclick="toggleInfo(this)" data-info-target="dest-info-text">i</button>
+    </div>
+    <p class="info-text" id="dest-info-text">Tape le nom de ta destination pour débloquer les liens Maps/Restaurants/Activités et la météo sur place.</p>
     <div class="dest-input-wrap">
       <input type="text" id="destInput" class="dest-input" placeholder="🌍 Ta destination (ex: Shkodër, Albanie)" value="${escapeHtml(loadDestination())}">
       <button type="button" class="clear-dest-btn" id="clearDestBtn" aria-label="Effacer la destination">✕</button>
     </div>
+    <div class="section-header-row" style="margin-top:14px;">
+      <div class="reminders-header">Liens utiles & météo</div>
+      <button type="button" class="info-btn" onclick="toggleInfo(this)" data-info-target="meteo-info-text">i</button>
+    </div>
+    <p class="info-text" id="meteo-info-text">📍 Maps, 🍽️ Restaurants, 🎡 Activités et 📅 Événements ouvrent une recherche Google pour ta destination. 🌦️ Météo affiche les prévisions sur 7 jours avec des suggestions de vêtements adaptées.</p>
     <div class="dest-buttons">
       <button class="dest-btn" onclick="openDestLink('maps')"><span class="dest-btn-icon">📍</span><span>Voir sur Maps</span></button>
       <button class="dest-btn" onclick="openDestLink('restaurants')"><span class="dest-btn-icon">🍽️</span><span>Restaurants</span></button>
@@ -4708,29 +4780,9 @@ function render() {
       <button class="dest-btn" onclick="openDestLink('evenements')"><span class="dest-btn-icon">📅</span><span>Événements</span></button>
       <button class="dest-btn" onclick="openDestWeather()"><span class="dest-btn-icon">🌦️</span><span>Météo</span></button>
     </div>
-    <div style="margin-top:10px;">
-      <label style="font-size:11px;text-transform:uppercase;letter-spacing:0.5px;color:var(--muted);display:block;margin-bottom:6px;">📅 Date de départ</label>
-      <input type="date" id="departureInput" class="dest-input" value="${escapeHtml(loadDeparture())}" style="margin-bottom:10px;">
-    </div>
-    <div class="reminders-wrap">
-      <div class="section-header-row">
-        <div class="reminders-header">🔔 Rappels avant le départ</div>
-        <button type="button" class="info-btn" onclick="toggleInfo(this)" data-info-target="reminders-info-text">i</button>
-      </div>
-      <p class="info-text" id="reminders-info-text">Ajoute un ou plusieurs rappels avec le délai de ton choix (ex: 90 jours pour un visa, 3 jours pour les papiers).</p>
-      <div class="reminder-rows" id="reminder-rows"></div>
-      <button class="dest-btn" id="add-reminder-btn" style="width:100%;margin-top:8px;">
-        <span class="dest-btn-icon">➕</span><span>Ajouter un rappel</span>
-      </button>
-      <button class="dest-btn" id="create-reminders-btn" style="width:100%;margin-top:8px;">
-        <span class="dest-btn-icon">📅</span><span>Générer les rappels (.ics)</span>
-      </button>
-    </div>
   `;
-  voyagePanel.appendChild(destWrap);
-  const destInput = destWrap.querySelector('#destInput');
-  const clearDestBtn = destWrap.querySelector('#clearDestBtn');
-  const departureInput = destWrap.querySelector('#departureInput');
+  const destInput = destBody.querySelector('#destInput');
+  const clearDestBtn = destBody.querySelector('#clearDestBtn');
   const updateClearDestBtn = () => {
     if (clearDestBtn) clearDestBtn.style.display = destInput.value ? 'inline-block' : 'none';
   };
@@ -4750,23 +4802,52 @@ function render() {
       destInput.focus();
     });
   }
+
+  // --- Bloc 2 : Dates & rappels ---
+  const datesBody = buildVoyageBlock('voyage-block--dates', '📅', 'Dates & rappels', false);
+  datesBody.innerHTML = `
+    <div class="section-header-row">
+      <label class="reminders-header" for="departureInput">Date de départ</label>
+      <button type="button" class="info-btn" onclick="toggleInfo(this)" data-info-target="departure-info-text">i</button>
+    </div>
+    <p class="info-text" id="departure-info-text">Sert à calculer tes rappels (ex: J-3) et à vérifier la validité de tes documents par rapport à cette date.</p>
+    <input type="date" id="departureInput" class="dest-input" value="${escapeHtml(loadDeparture())}" style="margin-bottom:14px;">
+    <div class="section-header-row">
+      <div class="reminders-header">Rappels avant le départ</div>
+      <button type="button" class="info-btn" onclick="toggleInfo(this)" data-info-target="reminders-info-text">i</button>
+    </div>
+    <p class="info-text" id="reminders-info-text">Ajoute un ou plusieurs rappels avec le délai de ton choix (ex: 90 jours pour un visa, 3 jours pour les papiers).</p>
+    <div class="reminder-rows" id="reminder-rows"></div>
+    <button class="dest-btn" id="add-reminder-btn" style="width:100%;margin-top:8px;">
+      <span class="dest-btn-icon">➕</span><span>Ajouter un rappel</span>
+    </button>
+    <div class="section-header-row" style="margin-top:12px;">
+      <div class="reminders-header">Fichier calendrier</div>
+      <button type="button" class="info-btn" onclick="toggleInfo(this)" data-info-target="ics-info-text">i</button>
+    </div>
+    <p class="info-text" id="ics-info-text">Télécharge tous tes rappels dans un seul fichier .ics, à importer d'un coup dans ton calendrier Android — c'est lui qui t'enverra les notifications aux bonnes dates.</p>
+    <button class="dest-btn" id="create-reminders-btn" style="width:100%;">
+      <span class="dest-btn-icon">📅</span><span>Générer les rappels (.ics)</span>
+    </button>
+  `;
+  const departureInput = datesBody.querySelector('#departureInput');
   if (departureInput) {
     departureInput.addEventListener('change', () => saveDeparture(departureInput.value));
   }
-  renderReminderRows(destWrap.querySelector('#reminder-rows'));
-  destWrap.querySelector('#add-reminder-btn').addEventListener('click', () => {
+  renderReminderRows(datesBody.querySelector('#reminder-rows'));
+  datesBody.querySelector('#add-reminder-btn').addEventListener('click', () => {
     const reminders = loadReminders();
     reminders.push({ id: uid(), daysBefore: 7, label: '' });
     saveReminders(reminders);
     render();
   });
-  destWrap.querySelector('#create-reminders-btn').addEventListener('click', createDepartureReminders);
+  datesBody.querySelector('#create-reminders-btn').addEventListener('click', createDepartureReminders);
 
-  const documentsWrap = document.createElement('div');
-  documentsWrap.className = 'documents-wrap';
-  documentsWrap.innerHTML = `
+  // --- Bloc 3 : Documents (replié par défaut) ---
+  const docsBody = buildVoyageBlock('voyage-block--docs', '📄', 'Validité des documents', false);
+  docsBody.innerHTML = `
     <div class="section-header-row">
-      <div class="documents-header">📄 Validité des documents</div>
+      <div class="documents-header">Tes documents</div>
       <button type="button" class="info-btn" onclick="toggleInfo(this)" data-info-target="documents-info-text">i</button>
     </div>
     <p class="info-text" id="documents-info-text">Ajoute tes documents importants (passeport, CNI, assurance...) avec leur date d'expiration. L'app te prévient si un document expire avant ou peu après ton départ.</p>
@@ -4775,20 +4856,19 @@ function render() {
       <span class="dest-btn-icon">➕</span><span>Ajouter un document</span>
     </button>
   `;
-  voyagePanel.appendChild(documentsWrap);
-  renderDocumentRows(documentsWrap.querySelector('#document-rows'));
-  documentsWrap.querySelector('#add-document-btn').addEventListener('click', () => {
+  renderDocumentRows(docsBody.querySelector('#document-rows'));
+  docsBody.querySelector('#add-document-btn').addEventListener('click', () => {
     const docs = loadDocuments();
     docs.push({ id: uid(), name: '', expiry: '' });
     saveDocuments(docs);
     render();
   });
 
-  const budgetWrap = document.createElement('div');
-  budgetWrap.className = 'budget-wrap';
-  budgetWrap.innerHTML = `
+  // --- Bloc 4 : Budget (replié par défaut) ---
+  const budgetBody = buildVoyageBlock('voyage-block--budget', '💰', 'Budget du voyage', false);
+  budgetBody.innerHTML = `
     <div class="section-header-row">
-      <div class="budget-header">💰 Budget du voyage</div>
+      <div class="budget-header">Tes dépenses</div>
       <button type="button" class="info-btn" onclick="toggleInfo(this)" data-info-target="budget-info-text">i</button>
     </div>
     <p class="info-text" id="budget-info-text">Compare ce que tu avais prévu de dépenser (avant le départ) à ce que tu as réellement dépensé (sur place ou après).</p>
@@ -4798,9 +4878,8 @@ function render() {
     </button>
     <div class="budget-totals" id="budget-totals"></div>
   `;
-  voyagePanel.appendChild(budgetWrap);
-  renderBudgetRows(budgetWrap.querySelector('#budget-rows'), budgetWrap.querySelector('#budget-totals'));
-  budgetWrap.querySelector('#add-budget-row-btn').addEventListener('click', () => {
+  renderBudgetRows(budgetBody.querySelector('#budget-rows'), budgetBody.querySelector('#budget-totals'));
+  budgetBody.querySelector('#add-budget-row-btn').addEventListener('click', () => {
     const items = loadBudget();
     items.push({ id: uid(), label: '', estimated: 0, spent: 0 });
     saveBudget(items);
@@ -4859,10 +4938,28 @@ function render() {
   const essentielsCats = state.filter(c => getCatGroup(c) === 'essentiels');
   const activiteCats = state.filter(c => getCatGroup(c) === 'activite');
 
+  const essentielsRow = document.createElement('div');
+  essentielsRow.className = 'sommaire-group-header-row';
+
   const essentielsLabel = document.createElement('div');
+  essentielsLabel.id = 'essentiels-section-anchor';
   essentielsLabel.className = 'sommaire-group-label sommaire-group-label--essentiels';
   essentielsLabel.textContent = '🎒 Les essentiels';
-  sommairePanel.appendChild(essentielsLabel);
+  essentielsRow.appendChild(essentielsLabel);
+
+  const jumpToActiviteBtn = document.createElement('button');
+  jumpToActiviteBtn.className = 'sommaire-jump-link';
+  jumpToActiviteBtn.innerHTML = '🎯 Selon activité <span class="sommaire-jump-arrow">↓</span>';
+  jumpToActiviteBtn.onclick = () => {
+    const target = document.getElementById('activite-section-anchor');
+    if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  };
+  const jumpToActiviteRow = document.createElement('div');
+  jumpToActiviteRow.className = 'sommaire-jump-row';
+  jumpToActiviteRow.appendChild(jumpToActiviteBtn);
+  essentielsRow.appendChild(jumpToActiviteRow);
+
+  sommairePanel.appendChild(essentielsRow);
 
   const tileGrid = document.createElement('div');
   tileGrid.className = 'index-tile-grid';
@@ -4889,10 +4986,28 @@ function render() {
   sommairePanel.appendChild(tileGrid);
   enableIndexTileDragVertical(tileGrid);
 
+  const activiteRow = document.createElement('div');
+  activiteRow.className = 'sommaire-group-header-row';
+
   const activiteLabel = document.createElement('div');
+  activiteLabel.id = 'activite-section-anchor';
   activiteLabel.className = 'sommaire-group-label sommaire-group-label--activite';
   activiteLabel.textContent = '🎯 Selon activité';
-  sommairePanel.appendChild(activiteLabel);
+  activiteRow.appendChild(activiteLabel);
+
+  const jumpToEssentielsBtn = document.createElement('button');
+  jumpToEssentielsBtn.className = 'sommaire-jump-link';
+  jumpToEssentielsBtn.innerHTML = '🎒 Les essentiels <span class="sommaire-jump-arrow">↑</span>';
+  jumpToEssentielsBtn.onclick = () => {
+    const target = document.getElementById('essentiels-section-anchor');
+    if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  };
+  const jumpToEssentielsRow = document.createElement('div');
+  jumpToEssentielsRow.className = 'sommaire-jump-row';
+  jumpToEssentielsRow.appendChild(jumpToEssentielsBtn);
+  activiteRow.appendChild(jumpToEssentielsRow);
+
+  sommairePanel.appendChild(activiteRow);
 
   const activiteGrid = document.createElement('div');
   activiteGrid.className = 'index-tile-grid';
@@ -5005,9 +5120,13 @@ function render() {
     <button class="dest-btn" id="drive-connect-btn" style="width:100%;margin-bottom:8px;">
       <span class="dest-btn-icon">🔐</span><span>${isDriveConnected ? 'Reconnecter Google Drive' : 'Se connecter à Google Drive'}</span>
     </button>
-    <button class="dest-btn" id="drive-sync-btn" style="width:100%;">
+    <button class="dest-btn" id="drive-sync-btn" style="width:100%;margin-bottom:8px;">
       <span class="dest-btn-icon">🔄</span><span>Synchroniser maintenant</span>
     </button>
+    <button class="dest-btn" id="drive-restore-btn" style="width:100%;">
+      <span class="dest-btn-icon">🕐</span><span>Voir les sauvegardes Drive</span>
+    </button>
+    <div id="drive-backups-list" style="margin-top:10px;"></div>
   `;
   outilsPanel.appendChild(drivePanel);
   drivePanel.querySelector('#drive-connect-btn').addEventListener('click', connectDrive);
@@ -5017,6 +5136,14 @@ function render() {
     } else {
       syncWithDrive();
     }
+  });
+  drivePanel.querySelector('#drive-restore-btn').addEventListener('click', () => {
+    if (!driveAccessToken) {
+      alert('Connecte-toi d\'abord à Google Drive.');
+      connectDrive();
+      return;
+    }
+    showDriveBackupsList(drivePanel.querySelector('#drive-backups-list'));
   });
 
   const backupPanel = document.createElement('div');
@@ -5154,12 +5281,18 @@ function render() {
     bottomActions.appendChild(moduleEditBtn);
 
     const hideCheckedBtn = document.createElement('button');
-    hideCheckedBtn.className = 'index-tile index-action-tile hide-checked-toggle' + (document.body.classList.contains('hide-checked') ? ' active' : '');
+    hideCheckedBtn.className = 'index-tile index-action-tile hide-checked-toggle' + (cat.hideChecked ? ' active' : '');
     hideCheckedBtn.innerHTML = `
       <div class="index-tile-icon">🙈</div>
       <div class="index-tile-title">Masquer coché(s)</div>
     `;
-    hideCheckedBtn.onclick = toggleHideChecked;
+    card.classList.toggle('hide-checked-items', !!cat.hideChecked);
+    hideCheckedBtn.onclick = () => {
+      cat.hideChecked = !cat.hideChecked;
+      saveState(state);
+      card.classList.toggle('hide-checked-items', cat.hideChecked);
+      hideCheckedBtn.classList.toggle('active', cat.hideChecked);
+    };
     bottomActions.appendChild(hideCheckedBtn);
 
     const backToIndexBtn = document.createElement('button');
@@ -5253,15 +5386,19 @@ function buildFullListCard() {
   };
   bottomActions.appendChild(moduleEditBtn);
 
+  const fullListHideChecked = localStorage.getItem('checklist_fulllist_hide_checked_v1') === 'true';
   const hideCheckedBtn = document.createElement('button');
-  hideCheckedBtn.className = 'index-tile index-action-tile hide-checked-toggle';
+  hideCheckedBtn.className = 'index-tile index-action-tile hide-checked-toggle' + (fullListHideChecked ? ' active' : '');
   hideCheckedBtn.innerHTML = `
     <div class="index-tile-icon">🙈</div>
     <div class="index-tile-title">Masquer cochés</div>
   `;
+  card.classList.toggle('hide-checked-items', fullListHideChecked);
   hideCheckedBtn.onclick = () => {
-    document.body.classList.toggle('hide-checked');
-    updateActionTileStates();
+    const now = localStorage.getItem('checklist_fulllist_hide_checked_v1') !== 'true';
+    localStorage.setItem('checklist_fulllist_hide_checked_v1', now ? 'true' : 'false');
+    card.classList.toggle('hide-checked-items', now);
+    hideCheckedBtn.classList.toggle('active', now);
   };
   bottomActions.appendChild(hideCheckedBtn);
 
@@ -6140,6 +6277,61 @@ async function syncWithDrive() {
   }
 }
 
+async function listDriveBackups() {
+  const folderId = await findOrCreateBackupFolder();
+  const q = encodeURIComponent(`'${folderId}' in parents and trashed=false`);
+  const res = await driveApiFetch(`https://www.googleapis.com/drive/v3/files?q=${q}&fields=files(id,name,createdTime)&orderBy=createdTime desc&pageSize=50`);
+  const data = await res.json();
+  return data.files || [];
+}
+
+async function showDriveBackupsList(container) {
+  container.innerHTML = '<p style="font-size:12px;color:var(--muted);">Chargement des sauvegardes...</p>';
+  try {
+    const backups = await listDriveBackups();
+    if (!backups.length) {
+      container.innerHTML = '<p style="font-size:12px;color:var(--muted);">Aucune sauvegarde Drive pour l\'instant (elles se créent automatiquement à chaque synchro).</p>';
+      return;
+    }
+    container.innerHTML = '';
+    backups.forEach(b => {
+      const row = document.createElement('div');
+      row.className = 'backup-item-row';
+      const label = new Date(b.createdTime).toLocaleString('fr-FR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+      row.innerHTML = `
+        <span class="backup-item-label">🕐 ${label}</span>
+        <button class="backup-item-restore-btn">Restaurer</button>
+      `;
+      row.querySelector('.backup-item-restore-btn').addEventListener('click', () => restoreDriveBackup(b.id, label));
+      container.appendChild(row);
+    });
+  } catch (err) {
+    container.innerHTML = '<p style="font-size:12px;color:var(--danger);">Impossible de charger les sauvegardes. Réessaie.</p>';
+    console.error(err);
+  }
+}
+
+async function restoreDriveBackup(fileId, label) {
+  const confirmed = confirm(`Restaurer la sauvegarde du ${label} ?\n\nTon état actuel sera d'abord sauvegardé localement par sécurité (Outils → Historique) avant d'être remplacé.`);
+  if (!confirmed) return;
+  try {
+    const res = await driveApiFetch(`https://www.googleapis.com/drive/v3/files/${fileId}?alt=media`);
+    const content = await res.json();
+    if (!Array.isArray(content)) {
+      alert("Ce fichier de sauvegarde n'est pas valide.");
+      return;
+    }
+    snapshotState();
+    state = content;
+    saveState(state);
+    render();
+    alert('Sauvegarde restaurée. Ton état précédent reste disponible dans Outils → Historique si besoin de revenir en arrière.');
+  } catch (err) {
+    alert('Erreur pendant la restauration. Réessaie.');
+    console.error(err);
+  }
+}
+
 function mergeStateArrays(dataSets) {
   const mergedByTitle = {};
   dataSets.forEach(ds => {
@@ -6267,18 +6459,12 @@ function toggleSearchMode() {
   }
 }
 
-function toggleHideChecked() {
-  document.body.classList.toggle('hide-checked');
-  updateActionTileStates();
-}
-
 function updateActionTileStates() {
   const editTile = document.getElementById('edit-toggle-btn');
   const backupTile = document.getElementById('backup-toggle-btn');
   const searchTile = document.getElementById('search-toggle-btn');
   const isBackup = document.body.classList.contains('backup-mode');
   const isSearch = document.body.classList.contains('search-mode');
-  const isHideChecked = document.body.classList.contains('hide-checked');
   if (editTile) {
     const isEdit = document.body.classList.contains('edit-mode');
     editTile.classList.toggle('active', isEdit);
@@ -6292,9 +6478,6 @@ function updateActionTileStates() {
     searchTile.classList.toggle('active', isSearch);
     searchTile.querySelector('.index-tile-title').textContent = isSearch ? '✅ Recherche activée' : 'Rechercher';
   }
-  document.querySelectorAll('.hide-checked-toggle').forEach(btn => {
-    btn.classList.toggle('active', isHideChecked);
-  });
   const panel = document.getElementById('backup-panel');
   if (panel) panel.classList.toggle('open', isBackup);
   const sPanel = document.getElementById('search-panel');
