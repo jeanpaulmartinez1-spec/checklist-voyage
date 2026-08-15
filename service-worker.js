@@ -1,7 +1,7 @@
-// IMPORTANT : change ce nom (v125 -> v126 -> ...) à chaque nouvelle version
+// IMPORTANT : change ce nom (v126 -> v127 -> ...) à chaque nouvelle version
 // que tu déposes sur GitHub, sinon le téléphone continue de servir l'ancienne
 // version depuis son cache.
-const CACHE_NAME = 'checklist-voyage-v126';
+const CACHE_NAME = 'checklist-voyage-v127';
 const FILES_TO_CACHE = [
   './',
   './index.html',

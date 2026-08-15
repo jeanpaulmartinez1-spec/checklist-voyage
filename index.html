@@ -2,7 +2,7 @@
 <html lang="fr"><head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>CHECK-LIST VOYAGE v126</title>
+<title>CHECK-LIST VOYAGE v127</title>
 <style>
   :root {
     --bg: #0f172a;
@@ -23,6 +23,44 @@
     50% { text-shadow: 0 0 26px rgba(87,200,255,1), 0 0 52px rgba(87,200,255,0.9), 0 0 78px rgba(87,200,255,0.6), 0 0 105px rgba(87,200,255,0.35); }
   }
   * { box-sizing: border-box; }
+  #universe-selector, #universe-content { display: none; max-width: 900px; margin: 0 auto; }
+  .universe-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 14px; }
+  .universe-tile {
+    background: var(--card); border: 1px solid #334155; border-radius: 16px;
+    padding: 20px 10px; display: flex; flex-direction: column; align-items: center; gap: 8px;
+    cursor: pointer; text-align: center;
+  }
+  .universe-tile:active { transform: scale(0.97); }
+  .universe-tile-icon { font-size: 34px; }
+  .universe-tile-title { font-size: 14px; font-weight: 700; }
+  .universe-tile-add { border-style: dashed; color: var(--muted); }
+  .back-to-universes-btn {
+    background: transparent; border: 1px solid var(--accent); color: var(--accent);
+    border-radius: 999px; padding: 8px 16px; font-size: 13px; font-weight: 700; cursor: pointer;
+    margin-bottom: 16px; display: inline-block;
+  }
+  .universe-content-title { font-size: 20px; margin: 0 0 16px; }
+  .universe-manage-row {
+    display: flex; align-items: center; justify-content: space-between;
+    background: var(--card); border: 1px solid #334155; border-radius: 10px; padding: 10px 14px; margin-bottom: 8px;
+  }
+  .universe-manage-actions button { background: transparent; border: none; font-size: 16px; cursor: pointer; margin-left: 8px; }
+  .todo-add-row { display: flex; gap: 8px; margin-bottom: 14px; }
+  .todo-add-row input {
+    flex: 1; background: var(--card); border: 1px solid #334155; border-radius: 8px; color: var(--text);
+    padding: 10px 12px; font-size: 14px;
+  }
+  .todo-add-row button {
+    background: var(--accent); border: none; color: #0f172a; border-radius: 8px;
+    padding: 10px 16px; font-size: 16px; cursor: pointer; font-weight: 700;
+  }
+  .todo-row {
+    display: flex; align-items: center; gap: 10px; background: var(--card); border: 1px solid #334155;
+    border-radius: 10px; padding: 10px 12px; margin-bottom: 8px;
+  }
+  .todo-row.checked .todo-text { text-decoration: line-through; color: var(--muted); }
+  .todo-text { flex: 1; font-size: 14px; }
+  .todo-del-btn { background: transparent; border: none; color: var(--danger); font-size: 16px; cursor: pointer; }
   body.fs-normal { zoom: 1; }
   body.fs-large { zoom: 1.18; }
   body.fs-xlarge { zoom: 1.38; }
@@ -612,10 +650,14 @@
 </head>
 <body class="">
 
-<h1 style="display:flex;align-items:center;justify-content:center;gap:10px;flex-wrap:wrap;"><img src="data:image/webp;base64,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" alt="Logo valise" style="height:32px;width:32px;object-fit:contain;flex:0 0 auto;"><span id="app-title-text" style="color:#57c8ff;">CHECK-LIST VOYAGE</span><span style="font-size:14px;color:#38d430;">(v126)</span></h1>
+<h1 style="display:flex;align-items:center;justify-content:center;gap:10px;flex-wrap:wrap;"><img src="data:image/webp;base64,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" alt="Logo valise" style="height:32px;width:32px;object-fit:contain;flex:0 0 auto;"><span id="app-title-text" style="color:#57c8ff;">CHECK-LIST VOYAGE</span><span style="font-size:14px;color:#38d430;">(v127)</span></h1>
 <div class="subtitle">Votre checklist personnalisable pour tous vos voyages — cochez, réorganisez, ajoutez ou modifiez vos éléments.</div>
 
+<div id="universe-selector"></div>
+<div id="universe-content"></div>
 
+<div id="voyage-view" style="display:none;">
+<button class="back-to-universes-btn" onclick="goToUniverseSelector()">← Mes univers</button>
 
 <div class="grid" id="grid"><div class="card index-card" id="card-index"><div class="card-header"><span class="card-title">🧭 Sommaire</span></div><div class="dest-wrap">
     <div class="dest-input-wrap">
@@ -3731,11 +3773,382 @@
   <button onclick="addModule()">➕ Ajouter un module</button>
 </div>
 
+</div>
+
 
 
 <script>
 const STORAGE_KEY = 'mobilhome_categories_v2';
-const APP_VERSION = 'v126';
+
+// ============================================================
+// SYSTÈME D'UNIVERS (Voyage / Maison / À faire / personnalisés)
+// ============================================================
+const UNIVERSES_KEY = 'checklist_universes_v1';
+const CURRENT_UNIVERSE_KEY = 'checklist_current_universe_v1';
+
+function loadUniverses() {
+  const raw = localStorage.getItem(UNIVERSES_KEY);
+  if (raw === null) {
+    const defaults = [
+      { id: 'maison', name: 'Maison', icon: '🏠', type: 'checklist', categories: [] },
+      { id: 'afaire', name: 'À faire', icon: '📝', type: 'todo', tasks: [] }
+    ];
+    saveUniverses(defaults);
+    return defaults;
+  }
+  try {
+    const parsed = JSON.parse(raw);
+    return Array.isArray(parsed) ? parsed : [];
+  } catch (e) {
+    return [];
+  }
+}
+function saveUniverses(list) {
+  localStorage.setItem(UNIVERSES_KEY, JSON.stringify(list));
+}
+function findUniverse(id) {
+  return loadUniverses().find(u => u.id === id);
+}
+function persistUniverse(u) {
+  const list = loadUniverses();
+  const idx = list.findIndex(x => x.id === u.id);
+  if (idx !== -1) { list[idx] = u; saveUniverses(list); }
+}
+
+// Par défaut : 'voyage', pour ne rien changer à l'usage existant tant que
+// la personne n'a jamais touché au sélecteur d'univers.
+let currentUniverse = localStorage.getItem(CURRENT_UNIVERSE_KEY) || 'voyage';
+let currentUniverseModuleId = null;
+
+function goToUniverseSelector() {
+  currentUniverse = '';
+  currentUniverseModuleId = null;
+  localStorage.setItem(CURRENT_UNIVERSE_KEY, '');
+  showCurrentUniverseView();
+}
+function goToUniverse(id) {
+  currentUniverse = id;
+  currentUniverseModuleId = null;
+  localStorage.setItem(CURRENT_UNIVERSE_KEY, id);
+  showCurrentUniverseView();
+}
+
+function showCurrentUniverseView() {
+  const selectorEl = document.getElementById('universe-selector');
+  const voyageEl = document.getElementById('voyage-view');
+  const otherEl = document.getElementById('universe-content');
+  selectorEl.style.display = 'none';
+  voyageEl.style.display = 'none';
+  otherEl.style.display = 'none';
+  window.scrollTo(0, 0);
+  if (currentUniverse === '') {
+    selectorEl.style.display = 'block';
+    renderUniverseSelector();
+  } else if (currentUniverse === 'voyage') {
+    voyageEl.style.display = 'block';
+    render();
+    updateActionTileStates();
+  } else {
+    otherEl.style.display = 'block';
+    renderUniverseContent(currentUniverse);
+  }
+}
+
+function renderUniverseSelector() {
+  const el = document.getElementById('universe-selector');
+  const universes = loadUniverses();
+  const voyageDone = state.reduce((s, c) => s + c.items.filter(i => i.checked).length, 0);
+  const voyageTotal = state.reduce((s, c) => s + c.items.length, 0);
+  const voyagePct = voyageTotal ? Math.round(voyageDone / voyageTotal * 100) : 0;
+
+  let tilesHtml = `
+    <div class="universe-tile" data-universe-id="voyage">
+      <div class="universe-tile-icon">🧳</div>
+      <div class="universe-tile-title">Voyage</div>
+      <div class="index-tile-progress-track"><div class="index-tile-progress-fill" style="width:${voyagePct}%"></div></div>
+    </div>
+  `;
+  universes.forEach(u => {
+    let pct = 0;
+    if (u.type === 'todo') {
+      const total = (u.tasks || []).length;
+      const done = (u.tasks || []).filter(t => t.checked).length;
+      pct = total ? Math.round(done / total * 100) : 0;
+    } else {
+      const total = (u.categories || []).reduce((s, c) => s + c.items.length, 0);
+      const done = (u.categories || []).reduce((s, c) => s + c.items.filter(i => i.checked).length, 0);
+      pct = total ? Math.round(done / total * 100) : 0;
+    }
+    tilesHtml += `
+      <div class="universe-tile" data-universe-id="${u.id}">
+        <div class="universe-tile-icon">${u.icon}</div>
+        <div class="universe-tile-title">${escapeHtml(u.name)}</div>
+        <div class="index-tile-progress-track"><div class="index-tile-progress-fill" style="width:${pct}%"></div></div>
+      </div>
+    `;
+  });
+  tilesHtml += `
+    <div class="universe-tile universe-tile-add" id="add-universe-tile">
+      <div class="universe-tile-icon">➕</div>
+      <div class="universe-tile-title">Ajouter un univers</div>
+    </div>
+  `;
+
+  el.innerHTML = `
+    <div class="universe-grid">${tilesHtml}</div>
+    <button class="dest-btn" id="manage-universes-btn" style="max-width:400px;margin:16px auto 0;display:block;">
+      <span class="dest-btn-icon">⚙️</span><span>Gérer mes univers</span>
+    </button>
+    <div id="universe-manage-panel" style="display:none;margin-top:12px;"></div>
+  `;
+  el.querySelectorAll('.universe-tile[data-universe-id]').forEach(tile => {
+    tile.addEventListener('click', () => goToUniverse(tile.dataset.universeId));
+  });
+  document.getElementById('add-universe-tile').addEventListener('click', createNewUniverse);
+  document.getElementById('manage-universes-btn').addEventListener('click', () => {
+    const panel = document.getElementById('universe-manage-panel');
+    const willOpen = panel.style.display === 'none';
+    panel.style.display = willOpen ? 'block' : 'none';
+    if (willOpen) renderUniverseManagePanel(panel);
+  });
+}
+
+function createNewUniverse() {
+  const name = prompt("Nom du nouvel univers (ex: Travail, Sport...) :");
+  if (!name || !name.trim()) return;
+  const icon = (prompt("Un emoji pour l'illustrer (ex: 💼, 🏋️, 📚) :", '📁') || '📁').trim() || '📁';
+  const wantsTodo = confirm("OK = liste simple à cocher (comme 'À faire').\nAnnuler = modules organisés (comme 'Maison').");
+  const universes = loadUniverses();
+  universes.push({
+    id: uid(), name: name.trim(), icon, type: wantsTodo ? 'todo' : 'checklist',
+    categories: [], tasks: []
+  });
+  saveUniverses(universes);
+  renderUniverseSelector();
+}
+
+function renderUniverseManagePanel(panel) {
+  const universes = loadUniverses();
+  panel.innerHTML = universes.map(u => `
+    <div class="universe-manage-row" data-id="${u.id}">
+      <span>${u.icon} ${escapeHtml(u.name)}</span>
+      <span class="universe-manage-actions">
+        <button class="universe-rename-btn" title="Renommer">✏️</button>
+        <button class="universe-delete-btn" title="Supprimer">🗑️</button>
+      </span>
+    </div>
+  `).join('') || '<p style="font-size:12px;color:var(--muted);">Aucun univers personnalisé pour l\'instant (Voyage reste toujours disponible).</p>';
+  panel.querySelectorAll('.universe-rename-btn').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      const id = e.target.closest('.universe-manage-row').dataset.id;
+      const u = universes.find(x => x.id === id);
+      const newName = prompt('Nouveau nom :', u.name);
+      if (newName && newName.trim()) {
+        u.name = newName.trim();
+        saveUniverses(universes);
+        renderUniverseManagePanel(panel);
+        renderUniverseSelector();
+      }
+    });
+  });
+  panel.querySelectorAll('.universe-delete-btn').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      const id = e.target.closest('.universe-manage-row').dataset.id;
+      const u = universes.find(x => x.id === id);
+      if (confirm(`Supprimer l'univers "${u.name}" et tout son contenu ? Cette action est définitive.`)) {
+        saveUniverses(universes.filter(x => x.id !== id));
+        renderUniverseManagePanel(panel);
+        renderUniverseSelector();
+      }
+    });
+  });
+}
+
+function renderUniverseContent(id) {
+  const el = document.getElementById('universe-content');
+  const u = findUniverse(id);
+  if (!u) { goToUniverseSelector(); return; }
+  if (u.type === 'todo') {
+    renderTodoUniverse(el, u);
+  } else if (currentUniverseModuleId) {
+    renderChecklistModule(el, u, currentUniverseModuleId);
+  } else {
+    renderChecklistUniverseHome(el, u);
+  }
+}
+
+function renderTodoUniverse(el, u) {
+  const tasks = u.tasks || [];
+  el.innerHTML = `
+    <button class="back-to-universes-btn" id="back-btn">← Mes univers</button>
+    <h2 class="universe-content-title">${u.icon} ${escapeHtml(u.name)}</h2>
+    <div class="todo-add-row">
+      <input type="text" id="todo-new-input" placeholder="Nouvelle tâche...">
+      <button id="todo-add-btn">➕</button>
+    </div>
+    <div class="todo-list" id="todo-list"></div>
+  `;
+  el.querySelector('#back-btn').addEventListener('click', goToUniverseSelector);
+  const listEl = el.querySelector('#todo-list');
+
+  function renderList() {
+    listEl.innerHTML = '';
+    if (!tasks.length) {
+      listEl.innerHTML = '<p style="font-size:13px;color:var(--muted);text-align:center;">Rien pour l\'instant.</p>';
+      return;
+    }
+    tasks.forEach(t => {
+      const row = document.createElement('div');
+      row.className = 'todo-row' + (t.checked ? ' checked' : '');
+      row.innerHTML = `
+        <input type="checkbox" ${t.checked ? 'checked' : ''}>
+        <span class="todo-text">${escapeHtml(t.text)}</span>
+        <button class="todo-del-btn">✕</button>
+      `;
+      row.querySelector('input').addEventListener('change', (e) => {
+        t.checked = e.target.checked;
+        persistUniverse(u);
+        renderList();
+      });
+      row.querySelector('.todo-del-btn').addEventListener('click', () => {
+        tasks.splice(tasks.indexOf(t), 1);
+        persistUniverse(u);
+        renderList();
+      });
+      listEl.appendChild(row);
+    });
+  }
+
+  function addTask() {
+    const input = el.querySelector('#todo-new-input');
+    const text = input.value.trim();
+    if (!text) return;
+    tasks.push({ id: uid(), text, checked: false });
+    persistUniverse(u);
+    input.value = '';
+    renderList();
+  }
+  el.querySelector('#todo-add-btn').addEventListener('click', addTask);
+  el.querySelector('#todo-new-input').addEventListener('keydown', (e) => { if (e.key === 'Enter') addTask(); });
+  renderList();
+}
+
+function renderChecklistUniverseHome(el, u) {
+  const cats = u.categories || [];
+  el.innerHTML = `
+    <button class="back-to-universes-btn" id="back-btn">← Mes univers</button>
+    <h2 class="universe-content-title">${u.icon} ${escapeHtml(u.name)}</h2>
+    <div class="index-tile-grid" id="universe-module-grid"></div>
+    <button class="dest-btn" id="add-universe-module-btn" style="max-width:400px;margin:16px auto 0;display:block;">
+      <span class="dest-btn-icon">➕</span><span>Ajouter un module</span>
+    </button>
+  `;
+  el.querySelector('#back-btn').addEventListener('click', goToUniverseSelector);
+  const grid = el.querySelector('#universe-module-grid');
+  if (!cats.length) {
+    grid.innerHTML = '<p style="font-size:13px;color:var(--muted);text-align:center;grid-column:1/-1;">Aucun module pour l\'instant.</p>';
+  }
+  cats.forEach(cat => {
+    const total = cat.items.length;
+    const done = cat.items.filter(i => i.checked).length;
+    const pct = total ? Math.round(done / total * 100) : 0;
+    const tile = document.createElement('div');
+    tile.className = 'index-tile';
+    tile.innerHTML = `
+      <div class="index-tile-icon">${cat.icon || '📦'}</div>
+      <div class="index-tile-title">${escapeHtml(cat.title)}</div>
+      <div class="index-tile-progress-track"><div class="index-tile-progress-fill" style="width:${pct}%"></div></div>
+      <div class="index-tile-count">${total} élément${total > 1 ? 's' : ''}</div>
+    `;
+    tile.addEventListener('click', () => {
+      currentUniverseModuleId = cat.id;
+      renderUniverseContent(u.id);
+    });
+    grid.appendChild(tile);
+  });
+  el.querySelector('#add-universe-module-btn').addEventListener('click', () => {
+    const name = prompt('Nom du module (ex: Cuisine, Salon...) :');
+    if (!name || !name.trim()) return;
+    const icon = (prompt('Un emoji pour ce module :', '📦') || '📦').trim() || '📦';
+    cats.push({ id: uid(), icon, title: name.trim(), items: [] });
+    persistUniverse(u);
+    renderUniverseContent(u.id);
+  });
+}
+
+function renderChecklistModule(el, u, moduleId) {
+  const cat = (u.categories || []).find(c => c.id === moduleId);
+  if (!cat) { currentUniverseModuleId = null; renderUniverseContent(u.id); return; }
+  el.innerHTML = `
+    <button class="back-to-universes-btn" id="back-btn">← ${escapeHtml(u.name)}</button>
+    <h2 class="universe-content-title">${cat.icon} ${escapeHtml(cat.title)}</h2>
+    <div class="todo-add-row">
+      <input type="text" id="module-new-item-input" placeholder="Ajouter un élément...">
+      <button id="module-add-item-btn">➕</button>
+    </div>
+    <div class="todo-list" id="module-item-list"></div>
+    <button class="dest-btn" id="delete-module-btn" style="max-width:400px;margin:20px auto 0;display:block;color:var(--danger);border-color:rgba(248,113,113,0.4);">
+      <span class="dest-btn-icon">🗑️</span><span>Supprimer ce module</span>
+    </button>
+  `;
+  el.querySelector('#back-btn').addEventListener('click', () => {
+    currentUniverseModuleId = null;
+    renderUniverseContent(u.id);
+  });
+  const listEl = el.querySelector('#module-item-list');
+
+  function renderList() {
+    listEl.innerHTML = '';
+    if (!cat.items.length) {
+      listEl.innerHTML = '<p style="font-size:13px;color:var(--muted);text-align:center;">Rien pour l\'instant.</p>';
+      return;
+    }
+    cat.items.forEach(item => {
+      const row = document.createElement('div');
+      row.className = 'todo-row' + (item.checked ? ' checked' : '');
+      row.innerHTML = `
+        <input type="checkbox" ${item.checked ? 'checked' : ''}>
+        <span class="todo-text">${escapeHtml(item.text)}</span>
+        <button class="todo-del-btn">✕</button>
+      `;
+      row.querySelector('input').addEventListener('change', (e) => {
+        item.checked = e.target.checked;
+        persistUniverse(u);
+        renderList();
+      });
+      row.querySelector('.todo-del-btn').addEventListener('click', () => {
+        cat.items.splice(cat.items.indexOf(item), 1);
+        persistUniverse(u);
+        renderList();
+      });
+      listEl.appendChild(row);
+    });
+  }
+
+  function addItem() {
+    const input = el.querySelector('#module-new-item-input');
+    const text = input.value.trim();
+    if (!text) return;
+    cat.items.push({ id: uid(), text, checked: false });
+    persistUniverse(u);
+    input.value = '';
+    renderList();
+  }
+  el.querySelector('#module-add-item-btn').addEventListener('click', addItem);
+  el.querySelector('#module-new-item-input').addEventListener('keydown', (e) => { if (e.key === 'Enter') addItem(); });
+  el.querySelector('#delete-module-btn').addEventListener('click', () => {
+    if (!confirm(`Supprimer le module "${cat.title}" et tout son contenu ?`)) return;
+    u.categories = u.categories.filter(c => c.id !== cat.id);
+    persistUniverse(u);
+    currentUniverseModuleId = null;
+    renderUniverseContent(u.id);
+  });
+  renderList();
+}
+// ============================================================
+// FIN SYSTÈME D'UNIVERS
+// ============================================================
+const APP_VERSION = 'v127';
 
 const DEFAULT_DATA = [
   { icon: "🪥", title: "Trousse de toilette", items: [
@@ -6527,8 +6940,7 @@ if (localStorage.getItem('backupModeActive') === 'true') {
 }
 applyFontSize();
 
-render();
-updateActionTileStates();
+showCurrentUniverseView();
 
 // Lueur pulsante sur le titre, seulement les 10 premières secondes après l'ouverture
 {
