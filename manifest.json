@@ -1,7 +1,7 @@
 {
-  "name": "Check-list Voyage",
-  "short_name": "Check-list",
-  "description": "Check-list de préparation et suivi de voyage — vêtements, documents, budget, météo, rappels.",
+  "name": "Check Liste Vie",
+  "short_name": "Check Liste Vie",
+  "description": "Check-listes du quotidien — voyage, maison, à faire, et tout ce que tu veux organiser.",
   "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",
