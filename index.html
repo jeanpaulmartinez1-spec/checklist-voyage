@@ -671,11 +671,12 @@
 </head>
 <body class="">
 
-<h1 style="display:flex;align-items:center;justify-content:center;gap:10px;flex-wrap:wrap;"><span class="app-logo-square"><span class="app-logo-check">✔</span></span><span id="app-title-text" style="color:#57c8ff;">CHECK LISTE VIE</span><span style="font-size:14px;color:#38d430;">(v129)</span></h1>
+<h1 style="display:flex;align-items:center;justify-content:center;gap:10px;flex-wrap:wrap;"><span class="app-logo-square"><span class="app-logo-check">✔</span></span><span id="app-title-text" style="color:#57c8ff;">CHECK LISTE VIE</span><span style="font-size:14px;color:#38d430;">(v130)</span></h1>
 <div class="subtitle">Votre checklist personnalisable pour tous vos voyages — cochez, réorganisez, ajoutez ou modifiez vos éléments.</div>
 
 <div id="universe-selector"></div>
 <div id="universe-content"></div>
+<div id="universe-tools-view" style="display:none;"></div>
 
 <div id="voyage-view" style="display:none;">
 <button class="back-to-universes-btn" onclick="goToUniverseSelector()">← Mes univers</button>
@@ -3868,9 +3869,11 @@ function showCurrentUniverseView() {
   const selectorEl = document.getElementById('universe-selector');
   const voyageEl = document.getElementById('voyage-view');
   const otherEl = document.getElementById('universe-content');
+  const toolsEl = document.getElementById('universe-tools-view');
   selectorEl.style.display = 'none';
   voyageEl.style.display = 'none';
   otherEl.style.display = 'none';
+  toolsEl.style.display = 'none';
   window.scrollTo(0, 0);
   if (currentUniverse === '') {
     selectorEl.style.display = 'block';
@@ -3879,6 +3882,9 @@ function showCurrentUniverseView() {
     voyageEl.style.display = 'block';
     render();
     updateActionTileStates();
+  } else if (currentUniverse === 'outils') {
+    toolsEl.style.display = 'block';
+    renderUniverseToolsView();
   } else {
     otherEl.style.display = 'block';
     renderUniverseContent(currentUniverse);
@@ -3923,6 +3929,12 @@ function renderUniverseSelector() {
     `;
   });
   tilesHtml += `
+    <div class="universe-tile" id="tools-universe-tile">
+      <div class="universe-tile-icon">⚙️</div>
+      <div class="universe-tile-title">Outils</div>
+    </div>
+  `;
+  tilesHtml += `
     <div class="universe-tile universe-tile-add" id="add-universe-tile">
       <div class="universe-tile-icon">➕</div>
       <div class="universe-tile-title">Ajouter un univers</div>
@@ -3931,15 +3943,13 @@ function renderUniverseSelector() {
 
   el.innerHTML = `
     <div class="universe-grid">${tilesHtml}</div>
-    <div style="display:flex;gap:8px;max-width:400px;margin:16px auto 0;">
-      <button class="dest-btn" id="toggle-universe-edit-btn" style="flex:1;">
-        <span class="dest-btn-icon">✏️</span><span>${universeEditMode ? 'Terminer' : 'Réorganiser'}</span>
-      </button>
-      <button class="dest-btn" id="manage-universes-btn" style="flex:1;">
-        <span class="dest-btn-icon">⚙️</span><span>Gérer mes univers</span>
-      </button>
-    </div>
-    <div id="universe-manage-panel" style="display:none;margin-top:12px;"></div>
+    ${universeEditMode ? `
+      <div style="text-align:center;margin-top:16px;">
+        <button class="dest-btn" id="finish-reorder-btn" style="max-width:300px;margin:0 auto;">
+          <span class="dest-btn-icon">✅</span><span>Terminer la réorganisation</span>
+        </button>
+      </div>
+    ` : ''}
   `;
   el.querySelectorAll('.universe-tile[data-universe-id]').forEach(tile => {
     tile.addEventListener('click', (e) => {
@@ -3961,17 +3971,36 @@ function renderUniverseSelector() {
       renderUniverseSelector();
     });
   });
-  document.getElementById('toggle-universe-edit-btn').addEventListener('click', () => {
-    universeEditMode = !universeEditMode;
-    renderUniverseSelector();
-  });
   document.getElementById('add-universe-tile').addEventListener('click', createNewUniverse);
-  document.getElementById('manage-universes-btn').addEventListener('click', () => {
-    const panel = document.getElementById('universe-manage-panel');
-    const willOpen = panel.style.display === 'none';
-    panel.style.display = willOpen ? 'block' : 'none';
-    if (willOpen) renderUniverseManagePanel(panel);
+  document.getElementById('tools-universe-tile').addEventListener('click', () => goToUniverse('outils'));
+  if (universeEditMode) {
+    document.getElementById('finish-reorder-btn').addEventListener('click', () => {
+      universeEditMode = false;
+      renderUniverseSelector();
+    });
+  }
+}
+
+function renderUniverseToolsView() {
+  const el = document.getElementById('universe-tools-view');
+  el.innerHTML = `
+    <button class="back-to-universes-btn" onclick="goToUniverseSelector()">← Mes univers</button>
+    <h2 style="text-align:center;margin:14px 0 20px;">⚙️ Outils</h2>
+    <div style="max-width:420px;margin:0 auto 20px;">
+      <button class="dest-btn" id="tools-reorder-btn" style="width:100%;">
+        <span class="dest-btn-icon">🔀</span><span>Réorganiser mes univers</span>
+      </button>
+    </div>
+    <div style="max-width:420px;margin:0 auto;">
+      <div class="documents-header" style="margin-bottom:10px;">Gérer mes univers</div>
+      <div id="universe-manage-panel"></div>
+    </div>
+  `;
+  document.getElementById('tools-reorder-btn').addEventListener('click', () => {
+    universeEditMode = true;
+    goToUniverseSelector();
   });
+  renderUniverseManagePanel(document.getElementById('universe-manage-panel'));
 }
 
 function createNewUniverse() {
@@ -4209,7 +4238,7 @@ function renderChecklistModule(el, u, moduleId) {
 // ============================================================
 // FIN SYSTÈME D'UNIVERS
 // ============================================================
-const APP_VERSION = 'v129';
+const APP_VERSION = 'v130';
 
 const DEFAULT_DATA = [
   { icon: "🪥", title: "Trousse de toilette", items: [
