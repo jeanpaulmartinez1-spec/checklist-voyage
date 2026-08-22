@@ -671,7 +671,7 @@
 </head>
 <body class="">
 
-<h1 style="display:flex;align-items:center;justify-content:center;gap:10px;flex-wrap:wrap;"><span class="app-logo-square"><span class="app-logo-check">✔</span></span><span id="app-title-text" style="color:#57c8ff;">CHECK LISTE VIE</span><span style="font-size:14px;color:#38d430;">(v130)</span></h1>
+<h1 style="display:flex;align-items:center;justify-content:center;gap:10px;flex-wrap:wrap;"><span class="app-logo-square"><span class="app-logo-check">✔</span></span><span id="app-title-text" style="color:#57c8ff;">CHECK LISTE VIE</span><span style="font-size:14px;color:#38d430;">(v131)</span></h1>
 <div class="subtitle">Votre checklist personnalisable pour tous vos voyages — cochez, réorganisez, ajoutez ou modifiez vos éléments.</div>
 
 <div id="universe-selector"></div>
@@ -4003,6 +4003,167 @@ function renderUniverseToolsView() {
   renderUniverseManagePanel(document.getElementById('universe-manage-panel'));
 }
 
+function renderUniverseToolsView() {
+  const el = document.getElementById('universe-tools-view');
+  el.innerHTML = `
+    <button class="back-to-universes-btn" onclick="goToUniverseSelector()">← Mes univers</button>
+    <h2 style="text-align:center;margin:14px 0 20px;">⚙️ Outils</h2>
+    <div style="max-width:420px;margin:0 auto 20px;">
+      <button class="dest-btn" id="tools-reorder-btn" style="width:100%;">
+        <span class="dest-btn-icon">🔀</span><span>Réorganiser mes univers</span>
+      </button>
+    </div>
+    <div style="max-width:420px;margin:0 auto 24px;">
+      <div class="documents-header" style="margin-bottom:10px;">Gérer mes univers</div>
+      <div id="universe-manage-panel"></div>
+    </div>
+    <div style="max-width:420px;margin:0 auto;border-top:1px dashed #334155;padding-top:20px;">
+      <div class="documents-header" style="margin-bottom:10px;">Voyage — réglages & sauvegarde</div>
+      <div class="backup-group edit-mode-only" id="tools-checkall-group">
+        <div class="backup-group-label">Cases à cocher</div>
+        <div class="backup-row">
+          <button class="act-tile" onclick="checkAll(true)"><span class="act-tile-icon">✅</span><span>Tout cocher</span></button>
+          <button class="act-tile" onclick="checkAll(false)"><span class="act-tile-icon">⬜</span><span>Tout décocher</span></button>
+        </div>
+      </div>
+      <div class="index-tile-grid index-action-grid" id="tools-action-grid"></div>
+      <div class="documents-wrap" id="tools-drive-panel"></div>
+      <div class="backup-panel" id="backup-panel"></div>
+    </div>
+  `;
+  document.getElementById('tools-reorder-btn').addEventListener('click', () => {
+    universeEditMode = true;
+    goToUniverseSelector();
+  });
+  renderUniverseManagePanel(document.getElementById('universe-manage-panel'));
+
+  const actionGrid = document.getElementById('tools-action-grid');
+
+  const editTile = document.createElement('button');
+  editTile.className = 'index-tile index-action-tile';
+  editTile.id = 'edit-toggle-btn';
+  editTile.innerHTML = `
+    <div class="index-tile-icon">✏️</div>
+    <div class="index-tile-title">Mode édition</div>
+  `;
+  editTile.onclick = toggleEditMode;
+  actionGrid.appendChild(editTile);
+
+  const backupTile = document.createElement('button');
+  backupTile.className = 'index-tile index-action-tile';
+  backupTile.id = 'backup-toggle-btn';
+  backupTile.innerHTML = `
+    <div class="index-tile-icon">💾</div>
+    <div class="index-tile-title">Sauvegarde</div>
+  `;
+  backupTile.onclick = toggleBackupMode;
+  actionGrid.appendChild(backupTile);
+
+  const downloadTile = document.createElement('button');
+  downloadTile.className = 'index-tile index-action-tile';
+  downloadTile.id = 'download-app-btn';
+  downloadTile.innerHTML = `
+    <div class="index-tile-icon">⬇️</div>
+    <div class="index-tile-title">Télécharger l'application</div>
+  `;
+  downloadTile.onclick = downloadApp;
+  actionGrid.appendChild(downloadTile);
+
+  const searchTile = document.createElement('button');
+  searchTile.className = 'index-tile index-action-tile';
+  searchTile.id = 'search-toggle-btn';
+  searchTile.innerHTML = `
+    <div class="index-tile-icon">🔍</div>
+    <div class="index-tile-title">Rechercher</div>
+  `;
+  searchTile.onclick = toggleSearchMode;
+  actionGrid.appendChild(searchTile);
+
+  const fontSizeTile = document.createElement('button');
+  fontSizeTile.className = 'index-tile index-action-tile';
+  fontSizeTile.id = 'fontsize-toggle-btn';
+  fontSizeTile.innerHTML = `
+    <div class="index-tile-icon">🔠</div>
+    <div class="index-tile-title">Taille texte : ${FONT_SIZE_LABELS[loadFontSize()]}</div>
+  `;
+  fontSizeTile.onclick = cycleFontSize;
+  actionGrid.appendChild(fontSizeTile);
+
+  const tourTile = document.createElement('button');
+  tourTile.className = 'index-tile index-action-tile';
+  tourTile.id = 'tour-replay-btn';
+  tourTile.innerHTML = `
+    <div class="index-tile-icon">🧭</div>
+    <div class="index-tile-title">Revoir la visite guidée</div>
+  `;
+  tourTile.onclick = startOnboarding;
+  actionGrid.appendChild(tourTile);
+
+  const drivePanel = document.getElementById('tools-drive-panel');
+  const isDriveConnected = localStorage.getItem(DRIVE_CONNECTED_KEY) === 'true';
+  const lastSync = localStorage.getItem(DRIVE_LAST_SYNC_KEY);
+  const lastSyncLabel = lastSync ? new Date(lastSync).toLocaleString('fr-FR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' }) : 'jamais';
+  drivePanel.innerHTML = `
+    <div class="section-header-row">
+      <div class="documents-header">🔗 Partage avec Patricia</div>
+      <button type="button" class="info-btn" onclick="toggleInfo(this)" data-info-target="drive-info-text">ⓘ</button>
+    </div>
+    <p class="info-text" id="drive-info-text">Connecte ton Google Drive pour partager la check-list avec Patricia (tous les univers, pas seulement Voyage). La première fois, partage le fichier "checklist-voyage-partage.json" créé dans ton Drive avec son adresse Gmail (accès modification), depuis le site de Google Drive. Ensuite, chacun peut synchroniser pour fusionner les mises à jour, sans rien écraser.</p>
+    <p id="drive-status-text" style="font-size:13px;color:var(--muted);margin:0 0 10px;">${isDriveConnected ? 'Dernière synchro : ' + lastSyncLabel : 'Non connecté.'}</p>
+    <button class="dest-btn" id="drive-connect-btn" style="width:100%;margin-bottom:8px;">
+      <span class="dest-btn-icon">🔐</span><span>${isDriveConnected ? 'Reconnecter Google Drive' : 'Se connecter à Google Drive'}</span>
+    </button>
+    <button class="dest-btn" id="drive-sync-btn" style="width:100%;margin-bottom:8px;">
+      <span class="dest-btn-icon">🔄</span><span>Synchroniser maintenant</span>
+    </button>
+    <button class="dest-btn" id="drive-restore-btn" style="width:100%;">
+      <span class="dest-btn-icon">🕐</span><span>Voir les sauvegardes Drive</span>
+    </button>
+    <div id="drive-backups-list" style="margin-top:10px;"></div>
+  `;
+  drivePanel.querySelector('#drive-connect-btn').addEventListener('click', connectDrive);
+  drivePanel.querySelector('#drive-sync-btn').addEventListener('click', () => {
+    if (!driveAccessToken) {
+      connectDrive();
+    } else {
+      syncWithDrive();
+    }
+  });
+  drivePanel.querySelector('#drive-restore-btn').addEventListener('click', () => {
+    if (!driveAccessToken) {
+      alert('Connecte-toi d\'abord à Google Drive.');
+      connectDrive();
+      return;
+    }
+    showDriveBackupsList(drivePanel.querySelector('#drive-backups-list'));
+  });
+
+  const backupPanel = document.getElementById('backup-panel');
+  backupPanel.innerHTML = `
+    <div class="backup-group">
+      <div class="backup-group-label">Fichier (Voyage + Maison + À faire + tes univers)</div>
+      <div class="backup-row">
+        <button class="act-tile" onclick="window.print()"><span class="act-tile-icon">🖨️</span><span>Imprimer</span></button>
+        <button class="act-tile" onclick="exportData()"><span class="act-tile-icon">💾</span><span>Exporter (JSON)</span></button>
+        <label class="act-tile">
+          <span class="act-tile-icon">📂</span><span>Importer</span>
+          <input type="file" id="import-file" accept=".json" style="display:none" onchange="importData(event)">
+        </label>
+        <label class="act-tile">
+          <span class="act-tile-icon">🔗</span><span>Fusionner 2 fichiers</span>
+          <input type="file" id="merge-files" accept=".json" multiple style="display:none" onchange="mergeData(event)">
+        </label>
+      </div>
+      <p style="font-size:11px;color:var(--muted);margin:8px 4px 0;line-height:1.5;">
+        💡 "Exporter" enregistre un fichier JSON horodaté dans vos Téléchargements — si rclone est configuré sur cet appareil, la synchronisation vers Drive se fait automatiquement, sans rien de plus à faire ici.
+      </p>
+    </div>
+    <div class="backup-group" id="history-group"></div>
+  `;
+  renderHistoryList(backupPanel.querySelector('#history-group'));
+  updateActionTileStates();
+}
+
 function createNewUniverse() {
   const name = prompt("Nom du nouvel univers (ex: Travail, Sport...) :");
   if (!name || !name.trim()) return;
@@ -4067,6 +4228,35 @@ function renderUniverseContent(id) {
   }
 }
 
+function openBulkAddModal(onConfirm) {
+  const overlay = document.createElement('div');
+  overlay.className = 'modal-overlay';
+  overlay.innerHTML = `
+    <div class="modal-box">
+      <h3>📋 Ajouter plusieurs éléments</h3>
+      <p style="font-size:12px;color:var(--muted);margin:0 0 10px;">Colle une liste, ou dicte avec le micro du clavier — un élément par ligne (ou séparés par des virgules).</p>
+      <textarea id="bulk-add-textarea" rows="6" style="width:100%;background:var(--card);border:1px solid #334155;border-radius:8px;color:var(--text);padding:10px;font-size:14px;box-sizing:border-box;resize:vertical;" placeholder="Pain
+Lait
+Oeufs..."></textarea>
+      <div class="modal-actions">
+        <button class="modal-btn-cancel" id="bulk-add-cancel">Annuler</button>
+        <button class="modal-btn-confirm" id="bulk-add-confirm">Ajouter</button>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(overlay);
+  const textarea = overlay.querySelector('#bulk-add-textarea');
+  setTimeout(() => textarea.focus(), 50);
+  overlay.querySelector('#bulk-add-cancel').addEventListener('click', () => overlay.remove());
+  overlay.addEventListener('click', (e) => { if (e.target === overlay) overlay.remove(); });
+  overlay.querySelector('#bulk-add-confirm').addEventListener('click', () => {
+    const raw = textarea.value;
+    const items = raw.split(/[\n,;]+/).map(s => s.trim()).filter(Boolean);
+    overlay.remove();
+    if (items.length) onConfirm(items);
+  });
+}
+
 function renderTodoUniverse(el, u) {
   const tasks = u.tasks || [];
   el.innerHTML = `
@@ -4076,8 +4266,18 @@ function renderTodoUniverse(el, u) {
       <input type="text" id="todo-new-input" placeholder="Nouvelle tâche...">
       <button id="todo-add-btn">➕</button>
     </div>
+    <button class="dest-btn" id="todo-bulk-add-btn" style="width:100%;margin-top:8px;">
+      <span class="dest-btn-icon">📋</span><span>Coller ou dicter une liste</span>
+    </button>
     <div class="todo-list" id="todo-list"></div>
   `;
+  el.querySelector('#todo-bulk-add-btn').addEventListener('click', () => {
+    openBulkAddModal((items) => {
+      items.forEach(text => tasks.push({ id: uid(), text, checked: false }));
+      persistUniverse(u);
+      renderList();
+    });
+  });
   el.querySelector('#back-btn').addEventListener('click', goToUniverseSelector);
   const listEl = el.querySelector('#todo-list');
 
@@ -4176,11 +4376,21 @@ function renderChecklistModule(el, u, moduleId) {
       <input type="text" id="module-new-item-input" placeholder="Ajouter un élément...">
       <button id="module-add-item-btn">➕</button>
     </div>
+    <button class="dest-btn" id="module-bulk-add-btn" style="width:100%;margin-top:8px;">
+      <span class="dest-btn-icon">📋</span><span>Coller ou dicter une liste</span>
+    </button>
     <div class="todo-list" id="module-item-list"></div>
     <button class="dest-btn" id="delete-module-btn" style="max-width:400px;margin:20px auto 0;display:block;color:var(--danger);border-color:rgba(248,113,113,0.4);">
       <span class="dest-btn-icon">🗑️</span><span>Supprimer ce module</span>
     </button>
   `;
+  el.querySelector('#module-bulk-add-btn').addEventListener('click', () => {
+    openBulkAddModal((items) => {
+      items.forEach(text => cat.items.push({ id: uid(), text, checked: false }));
+      persistUniverse(u);
+      renderList();
+    });
+  });
   el.querySelector('#back-btn').addEventListener('click', () => {
     currentUniverseModuleId = null;
     renderUniverseContent(u.id);
@@ -4238,7 +4448,7 @@ function renderChecklistModule(el, u, moduleId) {
 // ============================================================
 // FIN SYSTÈME D'UNIVERS
 // ============================================================
-const APP_VERSION = 'v130';
+const APP_VERSION = 'v131';
 
 const DEFAULT_DATA = [
   { icon: "🪥", title: "Trousse de toilette", items: [
@@ -5224,9 +5434,6 @@ function render() {
     <button class="sommaire-tab-btn${currentSommaireTab === 'sommaire' ? ' active' : ''}" data-tab="sommaire">
       <span class="tab-icon">🧭</span><span>Sommaire</span>
     </button>
-    <button class="sommaire-tab-btn${currentSommaireTab === 'outils' ? ' active' : ''}" data-tab="outils">
-      <span class="tab-icon">⚙️</span><span>Outils</span>
-    </button>
   `;
   tabBar.querySelectorAll('.sommaire-tab-btn').forEach(btn => {
     btn.addEventListener('click', () => switchSommaireTab(btn.dataset.tab));
@@ -5527,155 +5734,6 @@ function render() {
   enableIndexTileDragVertical(activiteGrid);
 
   tabsBody.appendChild(sommairePanel);
-
-  const outilsPanel = document.createElement('div');
-  outilsPanel.className = 'sommaire-tab-panel' + (currentSommaireTab === 'outils' ? ' active' : '');
-  outilsPanel.dataset.tab = 'outils';
-
-  const checkAllGroup = document.createElement('div');
-  checkAllGroup.className = 'backup-group edit-mode-only';
-  checkAllGroup.innerHTML = `
-    <div class="backup-group-label">Cases à cocher</div>
-    <div class="backup-row">
-      <button class="act-tile" onclick="checkAll(true)"><span class="act-tile-icon">✅</span><span>Tout cocher</span></button>
-      <button class="act-tile" onclick="checkAll(false)"><span class="act-tile-icon">⬜</span><span>Tout décocher</span></button>
-    </div>
-  `;
-  outilsPanel.appendChild(checkAllGroup);
-
-  const actionGrid = document.createElement('div');
-  actionGrid.className = 'index-tile-grid index-action-grid';
-
-  const editTile = document.createElement('button');
-  editTile.className = 'index-tile index-action-tile';
-  editTile.id = 'edit-toggle-btn';
-  editTile.innerHTML = `
-    <div class="index-tile-icon">✏️</div>
-    <div class="index-tile-title">Mode édition</div>
-  `;
-  editTile.onclick = toggleEditMode;
-  actionGrid.appendChild(editTile);
-
-  const backupTile = document.createElement('button');
-  backupTile.className = 'index-tile index-action-tile';
-  backupTile.id = 'backup-toggle-btn';
-  backupTile.innerHTML = `
-    <div class="index-tile-icon">💾</div>
-    <div class="index-tile-title">Sauvegarde</div>
-  `;
-  backupTile.onclick = toggleBackupMode;
-  actionGrid.appendChild(backupTile);
-
-  const downloadTile = document.createElement('button');
-  downloadTile.className = 'index-tile index-action-tile';
-  downloadTile.id = 'download-app-btn';
-  downloadTile.innerHTML = `
-    <div class="index-tile-icon">⬇️</div>
-    <div class="index-tile-title">Télécharger l'application</div>
-  `;
-  downloadTile.onclick = downloadApp;
-  actionGrid.appendChild(downloadTile);
-
-  const searchTile = document.createElement('button');
-  searchTile.className = 'index-tile index-action-tile';
-  searchTile.id = 'search-toggle-btn';
-  searchTile.innerHTML = `
-    <div class="index-tile-icon">🔍</div>
-    <div class="index-tile-title">Rechercher</div>
-  `;
-  searchTile.onclick = toggleSearchMode;
-  actionGrid.appendChild(searchTile);
-
-  const fontSizeTile = document.createElement('button');
-  fontSizeTile.className = 'index-tile index-action-tile';
-  fontSizeTile.id = 'fontsize-toggle-btn';
-  fontSizeTile.innerHTML = `
-    <div class="index-tile-icon">🔠</div>
-    <div class="index-tile-title">Taille texte : ${FONT_SIZE_LABELS[loadFontSize()]}</div>
-  `;
-  fontSizeTile.onclick = cycleFontSize;
-  actionGrid.appendChild(fontSizeTile);
-
-  const tourTile = document.createElement('button');
-  tourTile.className = 'index-tile index-action-tile';
-  tourTile.id = 'tour-replay-btn';
-  tourTile.innerHTML = `
-    <div class="index-tile-icon">🧭</div>
-    <div class="index-tile-title">Revoir la visite guidée</div>
-  `;
-  tourTile.onclick = startOnboarding;
-  actionGrid.appendChild(tourTile);
-
-  outilsPanel.appendChild(actionGrid);
-
-  const drivePanel = document.createElement('div');
-  drivePanel.className = 'documents-wrap';
-  const isDriveConnected = localStorage.getItem(DRIVE_CONNECTED_KEY) === 'true';
-  const lastSync = localStorage.getItem(DRIVE_LAST_SYNC_KEY);
-  const lastSyncLabel = lastSync ? new Date(lastSync).toLocaleString('fr-FR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' }) : 'jamais';
-  drivePanel.innerHTML = `
-    <div class="section-header-row">
-      <div class="documents-header">🔗 Partage avec Patricia</div>
-      <button type="button" class="info-btn" onclick="toggleInfo(this)" data-info-target="drive-info-text">ⓘ</button>
-    </div>
-    <p class="info-text" id="drive-info-text">Connecte ton Google Drive pour partager la check-list avec Patricia. La première fois, partage le fichier "checklist-voyage-partage.json" créé dans ton Drive avec son adresse Gmail (accès modification), depuis le site de Google Drive. Ensuite, chacun peut synchroniser pour fusionner les mises à jour, sans rien écraser.</p>
-    <p id="drive-status-text" style="font-size:13px;color:var(--muted);margin:0 0 10px;">${isDriveConnected ? 'Dernière synchro : ' + lastSyncLabel : 'Non connecté.'}</p>
-    <button class="dest-btn" id="drive-connect-btn" style="width:100%;margin-bottom:8px;">
-      <span class="dest-btn-icon">🔐</span><span>${isDriveConnected ? 'Reconnecter Google Drive' : 'Se connecter à Google Drive'}</span>
-    </button>
-    <button class="dest-btn" id="drive-sync-btn" style="width:100%;margin-bottom:8px;">
-      <span class="dest-btn-icon">🔄</span><span>Synchroniser maintenant</span>
-    </button>
-    <button class="dest-btn" id="drive-restore-btn" style="width:100%;">
-      <span class="dest-btn-icon">🕐</span><span>Voir les sauvegardes Drive</span>
-    </button>
-    <div id="drive-backups-list" style="margin-top:10px;"></div>
-  `;
-  outilsPanel.appendChild(drivePanel);
-  drivePanel.querySelector('#drive-connect-btn').addEventListener('click', connectDrive);
-  drivePanel.querySelector('#drive-sync-btn').addEventListener('click', () => {
-    if (!driveAccessToken) {
-      connectDrive();
-    } else {
-      syncWithDrive();
-    }
-  });
-  drivePanel.querySelector('#drive-restore-btn').addEventListener('click', () => {
-    if (!driveAccessToken) {
-      alert('Connecte-toi d\'abord à Google Drive.');
-      connectDrive();
-      return;
-    }
-    showDriveBackupsList(drivePanel.querySelector('#drive-backups-list'));
-  });
-
-  const backupPanel = document.createElement('div');
-  backupPanel.className = 'backup-panel';
-  backupPanel.id = 'backup-panel';
-  backupPanel.innerHTML = `
-    <div class="backup-group">
-      <div class="backup-group-label">Fichier</div>
-      <div class="backup-row">
-        <button class="act-tile" onclick="window.print()"><span class="act-tile-icon">🖨️</span><span>Imprimer</span></button>
-        <button class="act-tile" onclick="exportData()"><span class="act-tile-icon">💾</span><span>Exporter (JSON)</span></button>
-        <label class="act-tile">
-          <span class="act-tile-icon">📂</span><span>Importer</span>
-          <input type="file" id="import-file" accept=".json" style="display:none" onchange="importData(event)">
-        </label>
-        <label class="act-tile">
-          <span class="act-tile-icon">🔗</span><span>Fusionner 2 fichiers</span>
-          <input type="file" id="merge-files" accept=".json" multiple style="display:none" onchange="mergeData(event)">
-        </label>
-      </div>
-      <p style="font-size:11px;color:var(--muted);margin:8px 4px 0;line-height:1.5;">
-        💡 "Exporter" enregistre un fichier JSON horodaté dans vos Téléchargements — si rclone est configuré sur cet appareil, la synchronisation vers Drive se fait automatiquement, sans rien de plus à faire ici.
-      </p>
-    </div>
-    <div class="backup-group" id="history-group"></div>
-  `;
-  outilsPanel.appendChild(backupPanel);
-  renderHistoryList(backupPanel.querySelector('#history-group'));
-  tabsBody.appendChild(outilsPanel);
 
   indexCard.appendChild(tabsBody);
   grid.appendChild(indexCard);
@@ -7003,7 +7061,10 @@ function toggleSearchMode() {
   body.classList.toggle('search-mode');
   const isActive = body.classList.contains('search-mode');
   updateActionTileStates();
-  if (isActive) switchSommaireTab('sommaire');
+  if (isActive) {
+    if (currentUniverse !== 'voyage') goToUniverse('voyage');
+    switchSommaireTab('sommaire');
+  }
   const panel = document.getElementById('search-panel');
   if (panel) {
     panel.classList.toggle('open', isActive);
