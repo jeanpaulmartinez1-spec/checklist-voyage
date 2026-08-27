@@ -1,4 +1,4 @@
-const CACHE_NAME = 'checklist-voyage-v131';
+const CACHE_NAME = 'checklist-voyage-v133';
 const FILES_TO_CACHE = [
   './',
   './index.html',
