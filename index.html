@@ -24,6 +24,11 @@
     --muted: #64748b;
     --border: #cbd5e1;
   }
+  /* Palettes d'accent, combinables avec sombre/clair */
+  body.palette-ocean { --accent: #06b6d4; --accent2: #0891b2; }
+  body.palette-sunset { --accent: #fb923c; --accent2: #f472b6; }
+  body.palette-forest { --accent: #65a30d; --accent2: #a16207; }
+  body.palette-mono { --accent: #f43f5e; --accent2: #94a3b8; }
   /* Univers colorés : chaque tuile reçoit une teinte selon son rang */
   body.theme-colorful .universe-tile:nth-of-type(6n+1) { border-color: rgba(56,189,248,0.5); background: rgba(56,189,248,0.08); }
   body.theme-colorful .universe-tile:nth-of-type(6n+2) { border-color: rgba(251,146,60,0.5); background: rgba(251,146,60,0.08); }
@@ -128,7 +133,10 @@
   body {
     margin: 0;
     font-family: 'Segoe UI', Roboto, Arial, sans-serif;
-    background: linear-gradient(135deg, var(--bg), var(--card));
+    background-color: var(--bg);
+    background-image:
+      linear-gradient(135deg, var(--bg), var(--card)),
+      repeating-linear-gradient(45deg, rgba(255,255,255,0.02) 0px, rgba(255,255,255,0.02) 1px, transparent 1px, transparent 14px);
     color: var(--text);
     padding: 12px 20px 30px;
   }
@@ -597,6 +605,8 @@
     width: 100%; height: 5px; background: var(--border); border-radius: 3px; overflow: hidden;
   }
   .index-tile-progress-fill { height: 100%; background: var(--accent); border-radius: 3px; }
+  .universe-progress-ring { display: block; margin: 2px auto 0; }
+  .universe-progress-ring text { font-family: 'Segoe UI', Roboto, Arial, sans-serif; }
   .index-tile-count { font-size: 11px; color: var(--muted); }
   .index-tile-drag-handle { display: none; cursor: grab; color: var(--muted); font-size: 16px; touch-action: none; }
   .index-tile-drag-handle:active { cursor: grabbing; }
@@ -718,7 +728,7 @@
 </head>
 <body class="">
 
-<h1 style="display:flex;align-items:center;justify-content:center;gap:10px;flex-wrap:wrap;"><span class="app-logo-square"><span class="app-logo-check">✔</span></span><span id="app-title-text" style="color:#57c8ff;">CHECK LISTE VIE</span><span style="font-size:14px;color:#38d430;">(v134)</span></h1>
+<h1 style="display:flex;align-items:center;justify-content:center;gap:10px;flex-wrap:wrap;"><span class="app-logo-square"><span class="app-logo-check">✔</span></span><span id="app-title-text" style="color:#57c8ff;">CHECK LISTE VIE</span><span style="font-size:14px;color:#38d430;">(v135)</span></h1>
 <div class="subtitle">Votre checklist personnalisable pour tous vos voyages — cochez, réorganisez, ajoutez ou modifiez vos éléments.</div>
 
 <div id="universe-selector"></div>
@@ -3888,8 +3898,44 @@ function findUniverse(id) {
 }
 function persistUniverse(u) {
   const list = loadUniverses();
+  pushQuickUndo(state, list);
   const idx = list.findIndex(x => x.id === u.id);
   if (idx !== -1) { list[idx] = u; saveUniverses(list); }
+}
+
+// --- Annuler la dernière action (couvre Voyage + tous les univers) ---
+const QUICK_UNDO_KEY = 'checklist_quick_undo_v1';
+const QUICK_UNDO_MAX = 5;
+
+function pushQuickUndo(voyageSnapshot, universesSnapshot) {
+  try {
+    const stack = JSON.parse(localStorage.getItem(QUICK_UNDO_KEY) || '[]');
+    stack.unshift({ ts: new Date().toISOString(), voyage: voyageSnapshot, universes: universesSnapshot });
+    while (stack.length > QUICK_UNDO_MAX) stack.pop();
+    localStorage.setItem(QUICK_UNDO_KEY, JSON.stringify(stack));
+  } catch (e) { /* pas grave si ça échoue, ce n'est qu'un filet de confort */ }
+}
+
+function hasQuickUndo() {
+  try {
+    const stack = JSON.parse(localStorage.getItem(QUICK_UNDO_KEY) || '[]');
+    return stack.length > 0;
+  } catch (e) { return false; }
+}
+
+function quickUndoLastAction() {
+  let stack;
+  try { stack = JSON.parse(localStorage.getItem(QUICK_UNDO_KEY) || '[]'); } catch (e) { stack = []; }
+  if (!stack.length) { alert('Rien à annuler pour le moment.'); return; }
+  const last = stack.shift();
+  localStorage.setItem(QUICK_UNDO_KEY, JSON.stringify(stack));
+  state = Array.isArray(last.voyage) ? last.voyage : [];
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+  if (Array.isArray(last.universes)) {
+    localStorage.setItem(UNIVERSES_KEY, JSON.stringify(last.universes));
+  }
+  showCurrentUniverseView();
+  showToast('Dernière action annulée.');
 }
 
 // Par défaut : 'voyage', pour ne rien changer à l'usage existant tant que
@@ -3905,6 +3951,65 @@ function goToUniverseSelector() {
   localStorage.setItem(CURRENT_UNIVERSE_KEY, '');
   showCurrentUniverseView();
 }
+function goToUniverseModule(universeId, moduleId) {
+  currentUniverse = universeId;
+  currentUniverseModuleId = moduleId;
+  localStorage.setItem(CURRENT_UNIVERSE_KEY, universeId);
+  showCurrentUniverseView();
+}
+
+function renderGlobalSearchResults(query) {
+  const container = document.getElementById('global-search-results');
+  const q = query.trim().toLowerCase();
+  if (!q) { container.innerHTML = ''; return; }
+  const results = [];
+
+  state.forEach(cat => {
+    const catMatch = cat.title.toLowerCase().includes(q);
+    if (catMatch) {
+      results.push({ label: `🧳 Voyage — ${cat.title}`, action: () => { goToUniverse('voyage'); setTimeout(() => goToModule(cat.id), 60); } });
+    }
+    cat.items.forEach(item => {
+      if (item.text.toLowerCase().includes(q)) {
+        results.push({ label: `🧳 Voyage — ${cat.title} — ${item.text}`, action: () => { goToUniverse('voyage'); setTimeout(() => goToModule(cat.id), 60); } });
+      }
+    });
+  });
+
+  loadUniverses().forEach(u => {
+    if (u.id === 'voyage') return;
+    if (u.type === 'todo') {
+      (u.tasks || []).forEach(t => {
+        if (t.text.toLowerCase().includes(q)) {
+          results.push({ label: `${u.icon} ${u.name} — ${t.text}`, action: () => goToUniverse(u.id) });
+        }
+      });
+    } else {
+      (u.categories || []).forEach(cat => {
+        if (cat.title.toLowerCase().includes(q)) {
+          results.push({ label: `${u.icon} ${u.name} — ${cat.title}`, action: () => goToUniverseModule(u.id, cat.id) });
+        }
+        (cat.items || []).forEach(item => {
+          if (item.text.toLowerCase().includes(q)) {
+            results.push({ label: `${u.icon} ${u.name} — ${cat.title} — ${item.text}`, action: () => goToUniverseModule(u.id, cat.id) });
+          }
+        });
+      });
+    }
+  });
+
+  if (!results.length) {
+    container.innerHTML = '<p style="font-size:12px;color:var(--muted);">Aucun résultat.</p>';
+    return;
+  }
+  container.innerHTML = results.slice(0, 30).map((r, i) =>
+    `<button class="global-search-result-btn" data-idx="${i}">${escapeHtml(r.label)}</button>`
+  ).join('');
+  container.querySelectorAll('.global-search-result-btn').forEach((btn, i) => {
+    btn.addEventListener('click', results[i].action);
+  });
+}
+
 function goToUniverse(id) {
   currentUniverse = id;
   currentUniverseModuleId = null;
@@ -3940,6 +4045,22 @@ function showCurrentUniverseView() {
 
 let universeEditMode = false;
 
+function buildProgressRing(pct, color) {
+  const size = 44, stroke = 5;
+  const r = (size - stroke) / 2;
+  const c = 2 * Math.PI * r;
+  const offset = c * (1 - pct / 100);
+  return `
+    <svg width="${size}" height="${size}" viewBox="0 0 ${size} ${size}" class="universe-progress-ring">
+      <circle cx="${size/2}" cy="${size/2}" r="${r}" stroke="var(--border)" stroke-width="${stroke}" fill="none"/>
+      <circle cx="${size/2}" cy="${size/2}" r="${r}" stroke="${color}" stroke-width="${stroke}" fill="none"
+        stroke-dasharray="${c.toFixed(1)}" stroke-dashoffset="${offset.toFixed(1)}" stroke-linecap="round"
+        transform="rotate(-90 ${size/2} ${size/2})" style="transition: stroke-dashoffset 0.4s ease;"/>
+      <text x="50%" y="50%" text-anchor="middle" dy="0.35em" font-size="11" font-weight="700" fill="var(--text)">${pct}%</text>
+    </svg>
+  `;
+}
+
 function renderUniverseSelector() {
   const el = document.getElementById('universe-selector');
   const universes = loadUniverses();
@@ -3966,12 +4087,13 @@ function renderUniverseSelector() {
         <button class="universe-reorder-btn" data-dir="down" ${idx === universes.length - 1 ? 'disabled' : ''} title="Descendre">▼</button>
       </div>
     ` : '';
+    const ringColor = universeColorsEnabled() ? getUniverseColor(u) : 'var(--accent)';
     tilesHtml += `
       <div class="universe-tile${universeEditMode ? ' universe-tile-editing' : ''}" data-universe-id="${u.id}" ${universeColorsEnabled() ? `data-tinted="true" style="--tile-accent:${getUniverseColor(u)};"` : ''}>
         ${reorderControls}
         <div class="universe-tile-icon">${u.icon}</div>
         <div class="universe-tile-title">${escapeHtml(u.name)}</div>
-        <div class="index-tile-progress-track"><div class="index-tile-progress-fill" style="width:${pct}%"></div></div>
+        ${buildProgressRing(pct, ringColor)}
       </div>
     `;
   });
@@ -4034,6 +4156,16 @@ function renderUniverseToolsView() {
     <button class="back-to-universes-btn" onclick="goToUniverseSelector()">← Mes univers</button>
     <h2 style="text-align:center;margin:14px 0 20px;">⚙️ Outils</h2>
     <div style="max-width:420px;margin:0 auto 20px;">
+      <button class="dest-btn" id="undo-last-action-btn" style="width:100%;${hasQuickUndo() ? '' : 'opacity:0.5;'}">
+        <span class="dest-btn-icon">↩️</span><span>Annuler la dernière action</span>
+      </button>
+    </div>
+    <div style="max-width:420px;margin:0 auto 20px;">
+      <div class="documents-header" style="margin-bottom:10px;">🔍 Recherche globale</div>
+      <input type="text" id="global-search-input" class="dest-input" placeholder="Chercher partout (Voyage, Maison, À faire...)" style="margin-bottom:10px;">
+      <div id="global-search-results"></div>
+    </div>
+    <div style="max-width:420px;margin:0 auto 20px;">
       <button class="dest-btn" id="tools-reorder-btn" style="width:100%;">
         <span class="dest-btn-icon">🔀</span><span>Réorganiser mes univers</span>
       </button>
@@ -4059,6 +4191,15 @@ function renderUniverseToolsView() {
       <div class="backup-panel" id="backup-panel"></div>
     </div>
   `;
+  document.getElementById('undo-last-action-btn').addEventListener('click', () => {
+    if (!hasQuickUndo()) { alert('Rien à annuler pour le moment.'); return; }
+    if (confirm('Annuler la dernière action et revenir à l\'état précédent ?')) {
+      quickUndoLastAction();
+    }
+  });
+  document.getElementById('global-search-input').addEventListener('input', (e) => {
+    renderGlobalSearchResults(e.target.value);
+  });
   document.getElementById('tools-reorder-btn').addEventListener('click', () => {
     universeEditMode = true;
     goToUniverseSelector();
@@ -4223,12 +4364,13 @@ function renderUniverseManagePanel(panel) {
       const id = e.target.closest('.universe-manage-row').dataset.id;
       const u = universes.find(x => x.id === id);
       const newName = prompt('Nouveau nom :', u.name);
-      if (newName && newName.trim()) {
-        u.name = newName.trim();
-        saveUniverses(universes);
-        renderUniverseManagePanel(panel);
-        renderUniverseSelector();
-      }
+      if (newName === null) return;
+      if (newName.trim()) u.name = newName.trim();
+      const newIcon = prompt('Nouvel emoji (laisse tel quel pour ne pas changer) :', u.icon);
+      if (newIcon && newIcon.trim()) u.icon = newIcon.trim();
+      saveUniverses(universes);
+      renderUniverseManagePanel(panel);
+      renderUniverseSelector();
     });
   });
   panel.querySelectorAll('.universe-delete-btn').forEach(btn => {
@@ -4315,20 +4457,32 @@ Oeufs..."></textarea>
   });
 }
 
-// --- Apparence : 3 réglages indépendants et combinables ---
+// --- Apparence : réglages indépendants et combinables ---
 const THEME_MODE_KEY = 'checklist_theme_mode_v1';
+const ACCENT_PALETTE_KEY = 'checklist_accent_palette_v1';
+const PALETTES = [
+  { id: 'bleu', label: 'Bleu', icon: '🔵' },
+  { id: 'ocean', label: 'Océan', icon: '🌊' },
+  { id: 'sunset', label: 'Coucher de soleil', icon: '🌅' },
+  { id: 'forest', label: 'Forêt', icon: '🌲' },
+  { id: 'mono', label: 'Minimaliste', icon: '⚪' }
+];
 
 function applyAppearanceSettings() {
   const mode = localStorage.getItem(THEME_MODE_KEY) || 'dark';
   document.body.classList.toggle('theme-light', mode === 'light');
   document.body.classList.toggle('theme-colorful', universeColorsEnabled());
   document.body.classList.toggle('theme-anim', animationsEnabled());
+  const palette = localStorage.getItem(ACCENT_PALETTE_KEY) || 'bleu';
+  PALETTES.forEach(p => document.body.classList.remove('palette-' + p.id));
+  if (palette !== 'bleu') document.body.classList.add('palette-' + palette);
 }
 
 function renderAppearancePanel(container) {
   const mode = localStorage.getItem(THEME_MODE_KEY) || 'dark';
   const colorful = universeColorsEnabled();
   const anim = animationsEnabled();
+  const palette = localStorage.getItem(ACCENT_PALETTE_KEY) || 'bleu';
   container.innerHTML = `
     <div class="documents-header">🎨 Apparence</div>
     <p style="font-size:12px;color:var(--muted);margin:0 0 12px;">Ces réglages se combinent librement, change-les selon ton envie du jour.</p>
@@ -4339,6 +4493,15 @@ function renderAppearancePanel(container) {
       <button class="dest-btn" id="theme-light-btn" style="flex:1;${mode === 'light' ? 'border-color:var(--accent);' : ''}">
         <span class="dest-btn-icon">☀️</span><span>Clair</span>
       </button>
+    </div>
+    <div class="documents-header" style="font-size:13px;margin:14px 0 8px;">Palette de couleur</div>
+    <div class="index-tile-grid" style="grid-template-columns:repeat(auto-fit, minmax(90px,1fr));margin-bottom:10px;">
+      ${PALETTES.map(p => `
+        <button class="index-tile index-action-tile palette-swatch-btn" data-palette="${p.id}" style="${palette === p.id ? 'border-color:var(--accent);' : ''}">
+          <div class="index-tile-icon">${p.icon}</div>
+          <div class="index-tile-title">${p.label}</div>
+        </button>
+      `).join('')}
     </div>
     <button class="dest-btn" id="theme-colorful-btn" style="width:100%;margin-bottom:8px;${colorful ? 'border-color:var(--accent);' : ''}">
       <span class="dest-btn-icon">🌈</span><span>Univers colorés : ${colorful ? 'activé' : 'désactivé'}</span>
@@ -4357,6 +4520,13 @@ function renderAppearancePanel(container) {
     applyAppearanceSettings();
     renderAppearancePanel(container);
   });
+  container.querySelectorAll('.palette-swatch-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      localStorage.setItem(ACCENT_PALETTE_KEY, btn.dataset.palette);
+      applyAppearanceSettings();
+      renderAppearancePanel(container);
+    });
+  });
   container.querySelector('#theme-colorful-btn').addEventListener('click', () => {
     localStorage.setItem(UNIVERSE_COLORS_KEY, colorful ? 'false' : 'true');
     applyAppearanceSettings();
@@ -4367,6 +4537,60 @@ function renderAppearancePanel(container) {
     applyAppearanceSettings();
     renderAppearancePanel(container);
   });
+}
+
+function formatDueDate(due) {
+  if (!due) return null;
+  const target = new Date(due + 'T00:00:00');
+  if (isNaN(target.getTime())) return null;
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const diffDays = Math.round((target - today) / 86400000);
+  const label = target.toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit' });
+  let color = 'var(--muted)';
+  if (diffDays < 0) color = 'var(--danger)';
+  else if (diffDays <= 2) color = '#fbbf24';
+  else color = 'var(--accent2)';
+  return { label, color, diffDays };
+}
+
+function generateTodoReminders(u) {
+  const tasks = (u.tasks || []).filter(t => t.due && !t.checked);
+  if (!tasks.length) {
+    alert("Aucune tâche avec une échéance pour l'instant. Tape sur 📅 à côté d'une tâche pour lui en donner une.");
+    return;
+  }
+  const now = new Date();
+  const dtStamp = icsDate(now) + 'T000000Z';
+  const events = tasks.map((t, i) => {
+    const target = new Date(t.due + 'T00:00:00');
+    const dtStart = icsDate(target);
+    const dtEnd = icsDate(new Date(target.getTime() + 86400000));
+    return [
+      'BEGIN:VEVENT',
+      `UID:checklist-todo-${Date.now()}-${i}@local`,
+      `DTSTAMP:${dtStamp}`,
+      `DTSTART;VALUE=DATE:${dtStart}`,
+      `DTEND;VALUE=DATE:${dtEnd}`,
+      `SUMMARY:${t.text} (${u.name})`,
+      'DESCRIPTION:Rappel généré par Check Liste Vie.',
+      'BEGIN:VALARM',
+      'ACTION:DISPLAY',
+      'DESCRIPTION:Rappel',
+      'TRIGGER:-PT9H',
+      'END:VALARM',
+      'END:VEVENT'
+    ].join('\r\n');
+  });
+  const ics = ['BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//Check Liste Vie//FR', ...events, 'END:VCALENDAR'].join('\r\n');
+  const blob = new Blob([ics], { type: 'text/calendar' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `rappels_${u.name.toLowerCase().replace(/\s+/g, '_')}.ics`;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  alert(`${events.length} rappel(s) téléchargé(s). Ouvre le fichier depuis tes Téléchargements pour les ajouter à ton calendrier.`);
 }
 
 function renderTodoUniverse(el, u) {
@@ -4381,8 +4605,12 @@ function renderTodoUniverse(el, u) {
     <button class="dest-btn" id="todo-bulk-add-btn" style="width:100%;margin-top:8px;">
       <span class="dest-btn-icon">📋</span><span>Coller ou dicter une liste</span>
     </button>
+    <button class="dest-btn" id="todo-ics-btn" style="width:100%;margin-top:8px;">
+      <span class="dest-btn-icon">📅</span><span>Générer les rappels (.ics)</span>
+    </button>
     <div class="todo-list" id="todo-list"></div>
   `;
+  el.querySelector('#todo-ics-btn').addEventListener('click', () => generateTodoReminders(u));
   el.querySelector('#todo-bulk-add-btn').addEventListener('click', () => {
     openBulkAddModal((items) => {
       items.forEach(text => tasks.push({ id: uid(), text, checked: false }));
@@ -4403,9 +4631,11 @@ function renderTodoUniverse(el, u) {
       const row = document.createElement('div');
       row.className = 'todo-row' + (t.checked ? ' checked' : '');
       row.dataset.taskId = t.id;
+      const dueInfo = formatDueDate(t.due);
       row.innerHTML = `
         <input type="checkbox" ${t.checked ? 'checked' : ''}>
-        <span class="todo-text">${escapeHtml(t.text)}</span>
+        <span class="todo-text">${escapeHtml(t.text)}${dueInfo ? `<span class="todo-due-badge" style="color:${dueInfo.color};">📅 ${dueInfo.label}</span>` : ''}</span>
+        <button class="todo-due-btn" title="Échéance">📅</button>
         <button class="todo-del-btn">✕</button>
       `;
       row.querySelector('input').addEventListener('change', (e) => {
@@ -4415,7 +4645,19 @@ function renderTodoUniverse(el, u) {
         renderList();
         if (justChecked) playCheckAnimation(listEl.querySelector(`[data-task-id="${t.id}"]`));
       });
+      row.querySelector('.todo-due-btn').addEventListener('click', () => {
+        const current = t.due || '';
+        const value = prompt('Échéance (format AAAA-MM-JJ), laisse vide pour retirer :', current);
+        if (value === null) return;
+        const trimmed = value.trim();
+        if (!trimmed) { delete t.due; }
+        else if (/^\d{4}-\d{2}-\d{2}$/.test(trimmed)) { t.due = trimmed; }
+        else { alert('Format non reconnu, utilise AAAA-MM-JJ (ex: 2026-09-15).'); return; }
+        persistUniverse(u);
+        renderList();
+      });
       row.querySelector('.todo-del-btn').addEventListener('click', () => {
+        snapshotState();
         tasks.splice(tasks.indexOf(t), 1);
         persistUniverse(u);
         renderList();
@@ -4535,6 +4777,7 @@ function renderChecklistModule(el, u, moduleId) {
         if (justChecked) playCheckAnimation(listEl.querySelector(`[data-task-id="${item.id}"]`));
       });
       row.querySelector('.todo-del-btn').addEventListener('click', () => {
+        snapshotState();
         cat.items.splice(cat.items.indexOf(item), 1);
         persistUniverse(u);
         renderList();
@@ -4556,6 +4799,7 @@ function renderChecklistModule(el, u, moduleId) {
   el.querySelector('#module-new-item-input').addEventListener('keydown', (e) => { if (e.key === 'Enter') addItem(); });
   el.querySelector('#delete-module-btn').addEventListener('click', () => {
     if (!confirm(`Supprimer le module "${cat.title}" et tout son contenu ?`)) return;
+    snapshotState();
     u.categories = u.categories.filter(c => c.id !== cat.id);
     persistUniverse(u);
     currentUniverseModuleId = null;
@@ -4566,7 +4810,7 @@ function renderChecklistModule(el, u, moduleId) {
 // ============================================================
 // FIN SYSTÈME D'UNIVERS
 // ============================================================
-const APP_VERSION = 'v134';
+const APP_VERSION = 'v135';
 
 const DEFAULT_DATA = [
   { icon: "🪥", title: "Trousse de toilette", items: [
@@ -5410,8 +5654,13 @@ function loadState() {
   return initial;
 }
 
-function saveState(state) {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+function saveState(newState) {
+  try {
+    const oldRaw = localStorage.getItem(STORAGE_KEY);
+    const oldState = oldRaw ? JSON.parse(oldRaw) : [];
+    pushQuickUndo(oldState, loadUniverses());
+  } catch (e) { /* pas grave si ça échoue, ce n'est qu'un filet de confort */ }
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(newState));
 }
 
 const HISTORY_KEY = 'mobilhome_history_v1';
@@ -5428,7 +5677,7 @@ function loadHistory() {
 // pour garder un point de retour rapide (3 derniers max).
 function snapshotState() {
   const history = loadHistory();
-  history.unshift({ ts: new Date().toISOString(), data: state });
+  history.unshift({ ts: new Date().toISOString(), voyage: state, universes: loadUniverses() });
   while (history.length > HISTORY_MAX) history.pop();
   localStorage.setItem(HISTORY_KEY, JSON.stringify(history));
 }
@@ -5514,9 +5763,10 @@ function restoreSnapshot(index) {
   const dateStr = new Date(snap.ts).toLocaleString('fr-FR');
   const ok = confirm(`Restaurer la sauvegarde du ${dateStr} ? Les modifications actuelles seront remplacées.`);
   if (!ok) return;
-  state = snap.data;
+  state = snap.voyage || snap.data || [];
   saveState(state);
-  render();
+  if (Array.isArray(snap.universes)) saveUniverses(snap.universes);
+  showCurrentUniverseView();
 }
 
 let state = loadState();
